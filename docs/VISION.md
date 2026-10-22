@@ -59,6 +59,7 @@ The owner's AI agents can use the notes from anywhere through a remote MCP serve
 - **Encryption:** per-user envelope encryption with a master key in a key management service (see [ADR 0002](adr/0002-per-user-envelope-encryption.md)).
 - **Multi-user ready:** every record carries a `user_id` from day one.
 - **Revisions:** every saved version records the revision it was based on, so any conflict-resolution strategy remains possible.
+- **Free Apple account for now:** development uses a free Apple ID, so installs on the phone expire after 7 days and need reinstalling from Xcode. Nothing in the design may depend on paid-program features: sync works without push notifications (the app syncs when opened), and login doesn't use Sign in with Apple. Joining the $99/year Apple Developer Program later would add push-based sync, TestFlight and longer installs.
 
 ## Build order
 
