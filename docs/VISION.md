@@ -80,8 +80,10 @@ One action writes every note as a Markdown file into a folder the user picks in 
 
 ## Architecture
 
-- **iOS app:** native Swift, with all data in SQLite on the phone (via GRDB). Search uses SQLite's FTS5 index.
-- **No network.** The app makes no requests.
+- **iOS app:** native Swift, with all data in SQLite on the phone (via GRDB). Search uses SQLite's FTS5 index (see [ADR 0004](adr/0004-sqlite-with-grdb-and-fts5-search.md)).
+- **No network.** The app makes no requests (see [ADR 0001](adr/0001-local-only-app-with-no-backend.md)).
+- **No AI.** Fixed rules format the note from the shape of its text (see [ADR 0002](adr/0002-formatting-from-text-shape-without-ai.md)).
+- **Text is never modified.** Title, drawer and corrections are stored beside the text (see [ADR 0003](adr/0003-typed-text-is-never-modified.md)).
 - **Free Apple account for now:** development uses a free Apple ID, so installs on the phone expire after 7 days and need reinstalling from Xcode. Selling the app needs the $99/year Apple Developer Program, which can wait until release.
 
 ## Engineering
