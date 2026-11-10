@@ -111,7 +111,7 @@ None of this is in the first iteration.
 - Ordering the drawers in the save modal by similarity to the note, using on-device text embeddings.
 - A small on-device model for tidying notes. It must first prove on a real phone that it never drops or changes content.
 - Closing a drawer to hide it and its notes without deleting anything.
-- A backend, sync, encryption at rest on a server, and agent access over MCP. The earlier decisions are kept as proposals in [the ADRs](adr/index.md).
+- A backend, sync, encryption at rest on a server, and agent access over MCP.
 - Siri, App Intents and widgets.
 
 ## Open questions
