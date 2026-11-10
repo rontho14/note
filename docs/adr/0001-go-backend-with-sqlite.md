@@ -7,12 +7,14 @@ generated:
   by: claude-opus-5-5
   at: 2026-10-21
 status: stable
-decision_status: accepted
+decision_status: proposed
 sources:
   - docs/VISION.md
 ---
 
 # 0001. Go backend with SQLite
+
+> **Deferred on 2026-11-10.** The first iteration is a local-only app with no backend ([VISION](../VISION.md)). This decision is not in force and stays here as a proposal for a later iteration.
 
 ## Context and Problem
 
