@@ -36,6 +36,7 @@ settings  |  drawers  |  notes  |  WRITE  |  VIEW
 A quick flick from left to right saves the note and goes to the notes list.
 
 - For a note that has no title and no drawer, a modal appears first. It has a title field, the list of drawers, a delete button and a save button. Title and drawer are both optional.
+- The modal shows the drawers as chips in the user's order. A plus chip at the end adds a new drawer.
 - Saving with nothing filled in leaves the note untitled in `Unsorted`.
 - Delete in the modal sends the note to the trash. There is no separate gesture for discarding a note.
 - A note that already has a title or a drawer saves straight to the list, with no modal.
@@ -45,6 +46,7 @@ A quick flick from left to right saves the note and goes to the notes list.
 
 A flick from right to left on the write screen shows the note formatted.
 
+- The typeface changes with the mode. Writing is set in italic and view mode in roman, so the flick turns a draft into a page.
 - The app works out the formatting from the shape of the text, so the user types no symbols. A short line standing alone is a heading. A line ending in a colon labels what follows. Several short lines in a row are a list. Longer lines are a paragraph.
 - Dates, links, phone numbers and addresses are recognized and become tappable.
 - When the app is unsure, it shows plain text. A missed heading goes unnoticed, and a wrong one is irritating.
@@ -56,9 +58,11 @@ A flick from right to left on the write screen shows the note formatted.
 
 - The notes screen lists the latest notes. An untitled note shows its first few words, styled as a preview.
 - **Drawers** are the grouping, named after Napoleon's habit of keeping matters in mental drawers. Each note sits in exactly one drawer, chosen from a list the user defines. `Unsorted` holds notes with no drawer.
+- Tapping a drawer opens it in place. Its notes drop down under its name, and tapping it again closes it.
+- The user sets the order of the drawers. Holding a drawer lifts it, and dragging moves it. `Unsorted` always comes first.
 - Filing is done by hand, in the save modal or later. A note started inside a drawer is filed there.
-- Holding a note, in the notes list or in a drawer, opens a dropdown with delete, move to drawer and rename. Rows have no swipe actions, so nothing collides with swiping between screens.
-- The trash is reached from the drawers screen.
+- Holding a note, in the notes list or in a drawer, opens a dropdown with delete, move to drawer and rename. Moving the finger while holding turns the hold into a drag. Rows have no swipe actions, so nothing collides with swiping between screens.
+- The trash is a button at the bottom right of the drawers screen. Tapping it opens a sheet that lists the deleted notes, each with the days it has left and a restore button. Dragging a note onto the button deletes it.
 
 ## Search
 
@@ -70,8 +74,10 @@ A flick from right to left on the write screen shows the note formatted.
 
 ## Themes
 
-- The app ships with a few built-in themes, chosen in settings.
-- A theme changes colors, fonts and the background, and nothing else.
+- The look is specified in [DESIGN.md](DESIGN.md).
+- The app ships with five built-in themes, chosen in settings. Four are named Note Rome, Note Napoleon, Note Peking and Note Byzantium. The fifth is green and has no name yet.
+- The built-in themes share the paper, the ink and the typefaces. Each one changes two colors, the secondary text color and the accent.
+- A theme may change colors, fonts and the background, and nothing else.
 - A theme is a data file, so imported themes are possible later.
 
 ## Export
@@ -121,3 +127,7 @@ None of this is in the first iteration.
 - Whether a saved note opens from the list in write mode or view mode.
 - Animation details for launch, the flicks and the save modal.
 - How a correction in view mode stays attached to its line when the text is edited.
+- What the green theme is called, and whether it is the default.
+- Whether a whole drawer can be dragged to the trash, and where its notes go if it can.
+- Whether an open drawer shows every note or only the latest few.
+- Whether the first version has a dark mode.
