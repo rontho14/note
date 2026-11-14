@@ -32,10 +32,12 @@ The scrim behind a sheet is ink at 36% opacity.
 
 A built-in theme changes two colors and nothing else. The data files are in [design/themes](design/themes). They move into the app bundle when themes are built, which is step 5 of the build order.
 
+Note Rome is the default and comes first in the theme picker. The others follow in the order below.
+
 | Theme | Second | Accent | Source of the colors |
 |---|---|---|---|
-| Green, name undecided | `#5E6050` | `#1F5A3D` | The original Empire palette |
 | Note Rome | `#6B5E53` | `#66023C` | Stone, and Tyrian purple, which only emperors could wear |
+| Green, name undecided | `#5E6050` | `#1F5A3D` | The original Empire palette |
 | Note Napoleon | `#7A5C1E` | `#1B2A5C` | The imperial arms, a gold eagle on a blue shield |
 | Note Peking | `#85591B` | `#C2281C` | The yellow roofs and red walls of the Forbidden City |
 | Note Byzantium | `#5F5A4F` | `#C9A227` | Gold-ground mosaics |
@@ -50,6 +52,8 @@ Each theme file has these fields.
 | `onAccent` | Text and icons drawn on an accent fill |
 
 In four themes `accentText` equals `accent`, and `onAccent` is the surface color. Note Byzantium is the exception. Bright gold is unreadable as small text on paper, and cream is unreadable on gold. Its `accentText` is a deeper gold, `#8B6508`, and its `onAccent` is ink.
+
+Each theme also has an app icon: a single N in Bodoni Moda 500, either in `onAccent` on the theme's accent or in `accentText` on paper. iOS switches icons with `setAlternateIconName` and shows its own short message each time. Each icon is an Icon Composer file built into the app.
 
 Every second color and every `accentText` has a contrast of at least 4.5 to 1 against paper. I calculated these values. Nobody has measured them on a device.
 
@@ -79,7 +83,7 @@ Old-style figures are on everywhere.
 | Search field | Newsreader 400 | 18 / 24 | |
 | Settings row | Newsreader 400 | 17.5 | |
 | Settings value | Newsreader italic 400 | 16 | Second color |
-| Settings group label | Newsreader 600 | 10.5 / 28 | Same style as the drawer label |
+| Settings group label | Newsreader 600 | 12 / 28 | Uppercase, tracking 10%, second color |
 | Message pill and bubble | Newsreader italic 400 | 15 to 16 | Surface color on ink |
 
 Text size follows the iPhone by default, and a setting can replace it with a size the user picks. These sizes are for the default size. How each one scales is undecided.
@@ -182,7 +186,7 @@ The footer shows on settings, drawers and notes. It has the paper color and a ha
 
 ### Settings
 
-There is no title. Rows sit in four groups, each under a label in the drawer-label style:
+There is no title. Rows sit in four groups, each under an uppercase label at 12 points:
 
 | Group | Rows | Value shown |
 |---|---|---|
@@ -197,12 +201,12 @@ Each row opens a sheet:
 
 - **Theme** lists the five themes. Each has two overlapping 26 point circles in its second and accent colors and its name in Bodoni Moda at 22. The current one has a checkmark.
 - **Appearance** offers Match iPhone, Light and Dark.
-- **Keyboard** offers Match app, Light and Dark, with one line saying what Match app does.
+- **Keyboard** offers Match app, Light and Dark. Option sheets carry no explanation lines.
 - **Text size** has a Match iPhone switch, a slider between a small and a large `A`, and a sample sentence in the write style at the chosen size.
-- **Reopen a draft** has one sentence explaining it, the value in Bodoni Moda at 34, and a slider from `Off` to `1 hour`.
+- **Reopen a draft** has one sentence explaining it, the number of minutes in Bodoni Moda at 34, and a slider from `Off` to `1 hour`. The number can also be typed: tapping it brings up the number pad with the caret after the number, and the slider follows what is typed. Nothing changes in how the number looks until it is tapped. Anything above 60 becomes 60, and 0 means off.
 - **Export** lists the drawers, each with a 22 point checkbox, its name in Bodoni Moda at 22, its note count, and a chevron for picking single notes inside it. A drawer with only some notes picked shows a dash in its box and `3 of 9` in the accent. `Select all` sits in the heading row. The button at the bottom counts what will go out, as in `Export 40 notes`.
 - **Export done** shows a 56 point circle in the accent with a check, and how many notes went out. The circle grows in, slightly overshooting, then the check draws itself. Nothing moves when Reduce Motion is on.
-- **Lock with Face ID** shows a small picture of the app icon beside the Home Screen menu with `Require Face ID`, one sentence with the steps, and a reminder that the lock has to be turned on again on a new iPhone.
+- **Lock with Face ID** shows a small picture of the app icon beside the Home Screen menu with `Require Face ID`, and one sentence with the steps.
 - **Acknowledgements** is a page, not a sheet. It has each font's name in Bodoni Moda, its copyright line, and a link to the license.
 
 Sliders have a 3 point track in the hairline color, filled with the accent up to a white 28 point thumb.
@@ -217,7 +221,7 @@ Sliders have a 3 point track in the hairline color, filled with the accent up to
 
 ## Open questions
 
-- What the green theme is called, and whether it is the default. One proposal is Note Babylon.
+- What the green theme is called. The canvas shows Note Aztec as a proposal; Note Mughal and Note Babylon are the alternatives.
 - Whether a whole drawer can be dragged to the trash, and where its notes go if it can.
 - Whether an open drawer shows every note or only the latest few.
 - Whether Note Byzantium keeps two golds or drops to one deeper gold.

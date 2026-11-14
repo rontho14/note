@@ -8,3 +8,6 @@ ios/Note.xcodeproj/
 
 # Xcode per-user state
 xcuserdata/
+
+# Working specs for agents, kept local
+specs/

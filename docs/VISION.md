@@ -78,10 +78,11 @@ A flick from right to left on the write screen shows the note formatted.
 ## Themes
 
 - The look is specified in [DESIGN.md](DESIGN.md).
-- The app ships with five built-in themes, chosen in settings. Four are named Note Rome, Note Napoleon, Note Peking and Note Byzantium. The fifth is green and has no name yet.
+- The app ships with five built-in themes, chosen in settings. Note Rome is the default. The others are Note Napoleon, Note Peking, Note Byzantium and a green theme that has no name yet.
 - The built-in themes share the paper, the ink and the typefaces. Each one changes two colors, the secondary text color and the accent.
 - A theme may change colors, fonts and the background, and nothing else.
 - A theme is a data file, so imported themes are possible later.
+- Every theme comes with its own app icon, and a new theme must have one. Choosing a theme switches the icon. iOS only allows icons that are built into the app, so an imported theme would have to reuse one of them.
 
 ## Settings
 
@@ -149,7 +150,7 @@ None of this is in the first iteration.
 
 - Animation details for launch, the flicks and the save modal.
 - How a correction in view mode stays attached to its line when the text is edited.
-- What the green theme is called, and whether it is the default.
+- What the green theme is called.
 - Whether a whole drawer can be dragged to the trash, and where its notes go if it can.
 - Whether an open drawer shows every note or only the latest few.
 - What dark mode looks like. The appearance setting offers it, but it is not designed.
