@@ -5,6 +5,11 @@ options:
   deploymentTarget:
     iOS: "26.0"
   createIntermediateGroups: true
+packages:
+  NoteCore:
+    path: Packages/NoteCore
+  NoteUI:
+    path: Packages/NoteUI
 settings:
   base:
     SWIFT_VERSION: "6.0"
@@ -16,6 +21,8 @@ targets:
     type: application
     platform: iOS
     sources: [Note]
+    dependencies:
+      - package: NoteUI
     scheme: {}
     settings:
       base:

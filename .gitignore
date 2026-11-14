@@ -11,3 +11,7 @@ xcuserdata/
 
 # Working specs for agents, kept local
 specs/
+
+# SwiftPM build output
+.build/
+.swiftpm/
