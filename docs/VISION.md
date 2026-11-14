@@ -35,11 +35,11 @@ settings  |  drawers  |  notes  |  WRITE  |  VIEW
 
 A quick flick from left to right saves the note and goes to the notes list.
 
-- For a note that has no title and no drawer, a modal appears first. It has a title field, the list of drawers, a delete button and a save button. Title and drawer are both optional.
+- The first time a note is saved, a modal appears first. It has a title field, the list of drawers, a delete button and a save button. Title and drawer are both optional.
 - The modal shows the drawers as chips in the user's order. A plus chip at the end adds a new drawer.
 - Saving with nothing filled in leaves the note untitled in `Unsorted`.
 - Delete in the modal sends the note to the trash. There is no separate gesture for discarding a note.
-- A note that already has a title or a drawer saves straight to the list, with no modal.
+- After its first save, a note saves straight to the list, with no modal. A title can still be added later by renaming the note.
 - After a save, the write screen is blank again. To return to a saved note, tap it in the list.
 
 ## View mode
@@ -127,7 +127,7 @@ Export writes notes as Markdown files into a folder the user picks in Files. The
 
 ## Build order
 
-Each step produces something used daily.
+The first version is all five steps. The author starts using the app once the fifth is done.
 
 1. **Write, save, list, trash.**
 2. **View mode** with shape formatting.

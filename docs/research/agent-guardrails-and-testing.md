@@ -246,7 +246,7 @@ Each scenario is a short test that uses the launch arguments from 3.1. They come
 
 1. **Capture.** Launch, then confirm the keyboard is up and typing works. Leave an empty note and confirm nothing is saved.
 2. **Draft reopen.** Type, leave the app, relaunch within 5 minutes: the draft is back with the cursor in place. Shift the clock 6 minutes and relaunch: a blank note.
-3. **Save with the modal.** Flick to save an untitled note with no drawer: the modal appears. Save with nothing filled in: the note is untitled in `Unsorted`. Save another with a title and a drawer: both are stored. A note that already has a title saves with no modal.
+3. **Save with the modal.** Flick to save a new note: the modal appears. Save with nothing filled in: the note is untitled in `Unsorted`. Save another with a title and a drawer: both are stored. A note that has been saved once saves with no modal, even when it is untitled.
 4. **Delete from the modal.** The note goes to the trash and leaves the list.
 5. **View mode.** Flick into view mode on a fixture note: headings, labels and lists are formatted, and dates and phone numbers are tappable. Correct a line by holding it; the correction persists after a relaunch.
 6. **Text is never changed.** For every scenario above, the stored text equals the typed text byte for byte.
