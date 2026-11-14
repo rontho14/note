@@ -82,7 +82,7 @@ A flick from right to left on the write screen shows the note formatted.
 
 ## Export
 
-One action writes every note as a Markdown file into a folder the user picks in Files. With no server, this is also the backup.
+One action writes every note as a Markdown file into a folder the user picks in Files. With no server, this is the way to take notes out of the app, for example to another kind of phone. Moving to a new iPhone does not need it (see [Architecture](#architecture)).
 
 ## Architecture
 
@@ -90,6 +90,7 @@ One action writes every note as a Markdown file into a folder the user picks in 
 - **No network.** The app makes no requests (see [ADR 0001](adr/0001-local-only-app-with-no-backend.md)).
 - **No AI.** Fixed rules format the note from the shape of its text (see [ADR 0002](adr/0002-formatting-from-text-shape-without-ai.md)).
 - **Text is never modified.** Title, drawer and corrections are stored beside the text (see [ADR 0003](adr/0003-typed-text-is-never-modified.md)).
+- **Notes move to a new iPhone through iOS.** iCloud Backup, computer backups and Quick Start all copy an app's data, so a person who restores or transfers to a new iPhone keeps their notes with no work from the app. This holds only while the database lives in Application Support. It must never sit in `Library/Caches` or `tmp`, which backups skip, and must never be marked as excluded from backup. A test checks both. With iCloud Backup on, iOS copies the notes to Apple's servers, and Apple can read that copy unless the person has turned on Advanced Data Protection. The app itself still makes no requests.
 - **Free Apple account for now:** development uses a free Apple ID, so installs on the phone expire after 7 days and need reinstalling from Xcode. Selling the app needs the $99/year Apple Developer Program, which can wait until release.
 
 ## Engineering
