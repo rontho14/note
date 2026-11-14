@@ -10,7 +10,7 @@ The direction is called Empire. It was chosen on 2026-11-11 out of four explored
 - **There is no sans-serif.** Every word is Newsreader or Bodoni Moda.
 - **Bodoni Moda is for names.** It sets view headings, drawer names, the title field and sheet headings. Everything else is Newsreader.
 - **Ink is olive-black.** No neutral grey appears anywhere.
-- **A theme has one accent.** It marks the caret, the active footer tab, drawer numerals, the draft ring, the selected chip, add buttons, restore buttons and the save button. Nothing else is colored.
+- **A theme has one accent.** It marks the caret, the active footer tab, drawer numerals, the draft ring, the selected chip, add buttons, the Restore word, checkboxes, switches, slider fills, checkmarks and the save button. Nothing else is colored.
 - **Quiet things use the second color.** That covers dates, previews, labels, counts and inactive icons.
 - **Screens have no titles.** The highlighted footer icon says where you are.
 - **Every touch target is at least 44 points.**
@@ -76,9 +76,13 @@ Old-style figures are on everywhere.
 | Chip | Newsreader 400 | 16 | |
 | Save button | Newsreader 500 | 17.5 | |
 | Sheet heading | Bodoni Moda italic 500 | 26 / 34 | |
-| Search field | Newsreader 400 | 20 / 28 | |
+| Search field | Newsreader 400 | 18 / 24 | |
+| Settings row | Newsreader 400 | 17.5 | |
+| Settings value | Newsreader italic 400 | 16 | Second color |
+| Settings group label | Newsreader 600 | 10.5 / 28 | Same style as the drawer label |
+| Message pill and bubble | Newsreader italic 400 | 15 to 16 | Surface color on ink |
 
-Dynamic Type is undecided. These sizes are for the default text size only.
+Text size follows the iPhone by default, and a setting can replace it with a size the user picks. These sizes are for the default size. How each one scales is undecided.
 
 ### Fonts and licenses
 
@@ -105,19 +109,39 @@ Newsreader and Bodoni Moda are both under the SIL Open Font License 1.1. I read 
 
 ### Write
 
-The screen shows the note and nothing else. There is no title field, no footer and no button. The text is italic. The caret is the only color.
+The screen shows the note and nothing else. There is no title field, no footer and no button. The text is italic. The caret is the only color. At launch the screen is blank, with the caret on the first line and the keyboard up.
+
+### Keyboard
+
+The app uses the iPhone's keyboard. It is light when the app is in light mode and dark in dark mode, unless the Keyboard setting says otherwise. Its colors and font cannot be changed. On iOS 26 it is made of Liquid Glass, so how it looks over the paper needs checking on a phone.
 
 ### View
 
 The same text in roman. A heading is set in Bodoni Moda with 18 points below it. A paragraph has 26 points below it. A label line is italic in the second color, with its list directly under it. List items carry a 5 point diamond in the second color, 14 points before the text. Dates, phone numbers and links get a 1 point underline in the second color, 4 points below the baseline. There is no footer.
 
+Holding a line lifts it as a card. A menu under it offers Heading, List item, Checkbox and Plain text. Each choice is drawn in its own style: Heading in Bodoni Moda, List item with its diamond, Checkbox with an empty box. The current one has a checkmark in the accent.
+
+A checkbox item has a 22 point box with corners of 5. A checked box is filled with the accent and its text is struck through in the second color.
+
 ### Notes
 
-Each row has a 54 point date column on the left and the note on the right, with 12 points between them and 13 points of padding above and below. The note is one line of title or preview, with its drawer label under it. A draft has a 7 point ring in the accent before its preview, and its label reads Draft. The date column says `now`, `today` or a short date such as `9 Nov`.
+A search bar sits at the top, 58 points from the top of the screen. It is 44 points tall, fully rounded, in the surface color with a hairline border, and holds a magnifier in the second color. It has no placeholder word. The bar stays in place while the list scrolls under it, and a hairline under the bar marks the edge once the list has moved. A thin scroll indicator shows on the right while scrolling.
+
+Each row has a 54 point date column on the left and the note on the right, with 12 points between them and 13 points of padding above and below. The note is one line of title or preview, with its drawer label under it. A draft has a 7 point ring in the accent before its preview, and its label reads Draft. The date column says `now`, `today` or a short date such as `9 Nov`. Every row is the same height, which keeps a long list from jumping as it scrolls.
+
+On first launch the list area shows `No notes yet.` in italic in the second color.
+
+After a save the list opens with the new note at the top, tinted with the accent at 7% for a moment.
+
+Holding a note lifts its row as a card and shows a menu with Rename, Move to drawer and Delete, each with its icon. Move to drawer opens a sheet listing the drawers with the current one checked. Rename opens a sheet with the title field and a Save button above the keyboard.
+
+Deleting a note shows a dark pill above the footer, 52 points tall and fully rounded, saying `In the trash` with an underlined `Undo`.
 
 ### Search
 
-Pulling down on the notes screen reveals the search field above the list. The field is 52 points tall, with a 1 point ink line under it and a magnifier in the second color. Each result is laid out like a notes row, but its main line is the matching line of the note in roman. The match is tinted with the accent at 18% opacity. Under it sit the drawer label and the note's title, if it has one. Results found only by typo tolerance come last, under the words `close match` in italic.
+Tapping the search bar turns its border to ink and brings up the keyboard. Each result is laid out like a notes row, but its main line is the matching line of the note in roman. The match is tinted with the accent at 14% opacity. Under it sit the drawer label and the note's title, if it has one. Results found only by typo tolerance come last, under the words `close match` in italic. With no results the list area shows `No notes match.` in italic.
+
+Tapping a result opens the note in Write with the caret at the match. Nothing is tinted there.
 
 ### Drawers
 
@@ -125,13 +149,21 @@ Each row has a 36 point numeral column, the drawer name, and the count on the ri
 
 Tapping a drawer opens it in place. Its notes hang under its name, indented by the numeral column, in rows 36 points tall with the date on the right. Tapping the drawer again closes it.
 
-Holding a drawer lifts it as a card. Dragging moves it, and the numerals renumber as it passes other drawers. `Unsorted` cannot move.
+Holding a drawer lifts it as a card and shows a menu with Rename and Delete. Moving the finger instead drags it, and the numerals renumber as it passes other drawers. `Unsorted` cannot move.
+
+The plus button adds a new row at the end of the list, with the next numeral and the caret in the name, and the keyboard comes up.
+
+Deleting a drawer asks first, in a sheet with Cancel and Delete. The drawn version says its notes move to `Unsorted`, which is an assumption.
+
+On first launch the list holds only `Unsorted`.
 
 ### Trash
 
 The trash is a round button, 52 points across, at the bottom right of the drawers screen. It sits 20 points from the edge and 16 above the footer. It has the surface color, a hairline border, an icon in the second color and a small count.
 
-Tapping it opens a sheet. The sheet lists the deleted notes. Each row has the title or preview, the drawer label, the days it has left and a round restore button with the icon in `accentText`.
+Tapping it opens a sheet headed `Trash`, with `kept for 30 days` on the right. Each row has the title or preview, the drawer label, the days it has left and the word `Restore` in italic `accentText`. An empty trash shows `Nothing in the trash.` in italic.
+
+Restoring a note shows a small dark bubble just above the trash button, pointing down at it, naming the drawer the note went back to.
 
 A note can be dragged onto the button to delete it. As the note approaches, the button grows to 72 points, fills with the accent and opens its lid.
 
@@ -148,14 +180,40 @@ The sheet slides up over the dimmed note. From the top it has the title field, t
 
 The footer shows on settings, drawers and notes. It has the paper color and a hairline on top, with 8 points of padding above the icons and 14 at the sides. The four icons are settings, drawers, notes and write, in that order, each 48 points tall. Inactive icons use the second color. The active one is 1.7 times as wide, fully rounded and filled with the accent.
 
+### Settings
+
+There is no title. Rows sit in four groups, each under a label in the drawer-label style:
+
+| Group | Rows | Value shown |
+|---|---|---|
+| Look | Theme, Appearance, Text size, Keyboard, Footer | The theme name, `Match iPhone`, `Match iPhone`, `Match app`, and a switch for the footer |
+| Writing | Reopen a draft | `5 minutes` |
+| Your notes | Export, Import | None |
+| Privacy | Lock with Face ID | None |
+
+Rows are 52 points tall with a hairline between them. The label is on the left. The value is on the right in italic in the second color, followed by a chevron. The switch is the iPhone's size, 51 by 31, filled with the accent when on. Under the groups, centered, sit an underlined `Acknowledgements` link and the version number at 13 points in the second color.
+
+Each row opens a sheet:
+
+- **Theme** lists the five themes. Each has two overlapping 26 point circles in its second and accent colors and its name in Bodoni Moda at 22. The current one has a checkmark.
+- **Appearance** offers Match iPhone, Light and Dark.
+- **Keyboard** offers Match app, Light and Dark, with one line saying what Match app does.
+- **Text size** has a Match iPhone switch, a slider between a small and a large `A`, and a sample sentence in the write style at the chosen size.
+- **Reopen a draft** has one sentence explaining it, the value in Bodoni Moda at 34, and a slider from `Off` to `1 hour`.
+- **Export** lists the drawers, each with a 22 point checkbox, its name in Bodoni Moda at 22, its note count, and a chevron for picking single notes inside it. A drawer with only some notes picked shows a dash in its box and `3 of 9` in the accent. `Select all` sits in the heading row. The button at the bottom counts what will go out, as in `Export 40 notes`.
+- **Export done** shows a 56 point circle in the accent with a check, and how many notes went out. The circle grows in, slightly overshooting, then the check draws itself. Nothing moves when Reduce Motion is on.
+- **Lock with Face ID** shows a small picture of the app icon beside the Home Screen menu with `Require Face ID`, one sentence with the steps, and a reminder that the lock has to be turned on again on a new iPhone.
+- **Acknowledgements** is a page, not a sheet. It has each font's name in Bodoni Moda, its copyright line, and a link to the license.
+
+Sliders have a 3 point track in the hairline color, filled with the accent up to a white 28 point thumb.
+
 ## Not designed yet
 
-- Settings, including the theme picker and the acknowledgements screen.
-- The blank write screen at launch, and how the keyboard shares the screen.
-- The hold menus for a note and for a drawer.
-- Correcting a line in view mode.
 - Dark mode.
-- All animation.
+- Picking single notes inside a drawer for export.
+- Import.
+- Animation for everything except Export done.
+- How the keyboard looks over the paper on a real phone.
 
 ## Open questions
 
@@ -163,8 +221,11 @@ The footer shows on settings, drawers and notes. It has the paper color and a ha
 - Whether a whole drawer can be dragged to the trash, and where its notes go if it can.
 - Whether an open drawer shows every note or only the latest few.
 - Whether Note Byzantium keeps two golds or drops to one deeper gold.
-- How the sizes respond to Dynamic Type.
+- How each size scales when the user picks a text size.
+- Whether a deleted drawer's notes move to `Unsorted`.
+- Whether the trash can be emptied before the 30 days are up.
+- Whether the notes list gets date headers or a quick way back to the top.
 
 ## Source
 
-The mockups are on a design canvas that is private to the author: <https://claude.ai/artifact/6f66K26z3RchzrsRbwuHef>. The author reviewed them there. Nothing has been reviewed on a phone yet.
+The mockups are on a design canvas that is private to the author: <https://claude.ai/artifact/6f66K26z3RchzrsRbwuHef>. Its page `Note Rome · every screen` shows every screen and state and is the reference. The Explorations page holds the earlier directions. The author reviewed the screens there. Nothing has been reviewed on a phone yet.
