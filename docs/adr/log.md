@@ -5,3 +5,4 @@
 - 2026-11-10: Created [0002](0002-formatting-from-text-shape-without-ai.md), accepted. Formatting without typed symbols and without a model.
 - 2026-11-10: Created [0003](0003-typed-text-is-never-modified.md), accepted. Nothing but the user's typing may change a note's text.
 - 2026-11-10: Created [0004](0004-sqlite-with-grdb-and-fts5-search.md), accepted. One local store for notes and the search index.
+- 2026-11-13: Created [0005](0005-app-structure-and-enforced-boundaries.md), accepted. Agents follow a structure only as far as `make check` enforces it.

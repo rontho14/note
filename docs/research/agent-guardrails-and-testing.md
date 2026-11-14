@@ -1,20 +1,20 @@
 # Agent guardrails and autonomous testing
 
-> **Note, 2026-11-10.** This research predates the change to a local-only app with no backend and no AI ([VISION](../VISION.md)). The Swift, Simulator and `make check` parts still apply. The Go, server, KMS, MCP and AI-provider parts do not apply to the first iteration.
+> **Revised 2026-11-13.** The first version of this note, from 2026-10-27, planned a Go server with encryption, an AI provider, MCP access and sync. [ADR 0001](../adr/0001-local-only-app-with-no-backend.md) dropped all of that. This revision removes those parts and rewrites the test plan for an app with no server. The original is in git history. The app's structure is decided in [ADR 0005](../adr/0005-app-structure-and-enforced-boundaries.md).
 
 Research date: 2026-10-27. Versions were checked against GitHub releases on that date. Anything marked **unverified** could not be confirmed from a primary source.
 
 ## Summary
 
-- **"e2e" is almost certainly [e2e by TesterArmy](https://e2e.tester.army/).** It is an open source (Apache-2.0) TypeScript test runner, launched on [2026-10-01](https://e2e.tester.army/blog/introducing-e2e), with 12k GitHub stars. It **does support native iOS apps in the Simulator**: the repo ships a [SwiftUI example](https://github.com/tester-army/e2e/tree/main/examples/with-swiftui) last checked with Xcode 27.1 on an iOS 26.5 simulator. It is pre-1.0, needs Node, and agent steps need a model key or subscription. It drives the app but does not boot the backend.
+- **"e2e" is almost certainly [e2e by TesterArmy](https://e2e.tester.army/).** It is an open source (Apache-2.0) TypeScript test runner, launched on [2026-10-01](https://e2e.tester.army/blog/introducing-e2e), with 12k GitHub stars. It **does support native iOS apps in the Simulator**: the repo ships a [SwiftUI example](https://github.com/tester-army/e2e/tree/main/examples/with-swiftui) last checked with Xcode 27.1 on an iOS 26.5 simulator. It is pre-1.0, needs Node, and agent steps need a model key or subscription.
 - **Make bad code impossible, in this order** (Lauren Tan's ranking, echoed by Matt Pocock): first, design types and modules so the mistake can't be expressed. Second, a lint rule or test that fails CI. Prose in CLAUDE.md comes last.
-- **Go: the compiler already enforces module boundaries.** Use `internal/` packages and narrow interfaces (for example, the MCP layer gets a notes interface that has no hard-delete method). Add golangci-lint v2.15 with depguard (import boundaries), forbidigo (banned calls), gocritic/ruleguard (project rules), nilaway (module plugin), and gofumpt.
-- **Swift: turn on the stricter compiler modes Xcode 27.1 already ships.** These are Swift 6 mode (already on), warnings as errors (already on), `ExistentialAny`, `MemberImportVisibility`, `InternalImportsByDefault`, approachable concurrency, and default MainActor isolation for the UI target. Split the app into local Swift packages so that, for example, only the store module can `import GRDB`. Add SwiftLint 0.65 with `strict: true`, force unwrapping/`try!` banned, and custom regex rules. Format with swift-format, which ships in the Xcode toolchain.
-- **One entry point: `make check`.** It runs format check, lint, build and tests. A plain git pre-commit hook runs the fast part, and GitHub Actions runs everything. CI is the real gate, because `git commit --no-verify` skips local hooks.
-- **The top testing priority is a whole-system test mode.** `make e2e-up` starts the Go server built with an `e2e` build tag, using a temp SQLite file, seeded fixtures, a fake AI provider, a fake KMS, a controllable clock and a `/_test` control API. It builds the iOS app in an `E2E` configuration, boots a dedicated simulator, installs the app and launches it pointed at the local server. It then writes one `e2e/state.json` with every URL, UDID, DB path and log path an agent needs.
-- **Agents drive the running system several ways.** Claude Code Desktop's built-in [iOS Simulator pane](https://code.claude.com/docs/en/desktop-ios-simulator) or MobileBuildMCP (formerly XcodeBuildMCP) work for exploration. `xcrun simctl` scripts control the simulator. A committed XCUITest suite gives repeatable UI scenarios. For MCP, Claude Code can connect to the local server as a client, the MCP Inspector CLI can script calls, and Go SDK client tests cover the rest. Maestro or TesterArmy's e2e are optional extra drivers.
-- **Agents verify outcomes from several sides.** On the app side: the accessibility tree, screenshots, and the app's own SQLite file (`xcrun simctl get_app_container`). On the server side: the server's SQLite file, structured logs, and a `make e2e-invariants` command. That command checks revision chains, trash rules, and that no seeded plaintext canary appears in the database or backups.
-- **Nothing here needs the paid Apple Developer Program.** Simulator builds, XCUITest, simctl, Maestro, e2e and the MCP simulator tools all work without signing. Only physical-device automation needs a team ID.
+- **Swift: turn on the stricter compiler modes Xcode 27.1 already ships.** These are Swift 6 mode (already on), warnings as errors (already on), `ExistentialAny`, `MemberImportVisibility`, `InternalImportsByDefault`, approachable concurrency, and default MainActor isolation for the UI module. Split the app into local Swift packages so that, for example, only the store module imports GRDB. Format with swift-format, which ships in the Xcode toolchain. SwiftLint 0.65 is available for rules the compiler can't express.
+- **Add checks as the code they protect is written.** ADR 0005 starts with three import checks and adds the rest when their code appears or when a rule gets broken twice.
+- **One entry point: `make check`.** It runs format check, checks, build and tests. A plain git pre-commit hook runs the fast part, and GitHub Actions runs everything. CI is the real gate, because `git commit --no-verify` skips local hooks.
+- **The top testing priority is one command to a running app in a known state.** `make sim-up` builds the app in an `E2E` configuration, boots a dedicated simulator, installs the app and launches it with test launch arguments: reset storage, load a fixture, shift the clock, turn off animations. It writes one `build/e2e/state.json` with the simulator ID, the app's data folder, the database path and the log command an agent needs.
+- **Agents drive the running app several ways.** Claude Code Desktop's built-in [iOS Simulator pane](https://code.claude.com/docs/en/desktop-ios-simulator) or MobileBuildMCP (formerly XcodeBuildMCP) work for exploration. `xcrun simctl` scripts control the simulator. A committed XCUITest suite gives repeatable scenarios. Maestro or TesterArmy's e2e are optional extra drivers.
+- **Agents verify outcomes from several sides.** These are the accessibility tree, screenshots, the app's own SQLite file (found with `xcrun simctl get_app_container`), the app's logs, and a `make e2e-invariants` command that checks the database against the app's rules.
+- **Nothing here needs the paid Apple Developer Program.** Simulator builds, XCUITest, simctl, Maestro, e2e and the simulator MCP tools all work without signing. Only physical-device automation needs a team ID.
 
 ---
 
@@ -38,7 +38,7 @@ Research date: 2026-10-27. Versions were checked against GitHub releases on that
 - Requirements: Xcode with a simulator runtime, plus Node 22.22.3+, 24.8+ or 26+. Agent steps need an AI SDK model, such as a Vercel AI Gateway or OpenRouter key, a local model, or a ChatGPT/Copilot/SuperGrok subscription. Without a key, agent tests skip and deterministic tests still run. ([mobile docs](https://e2e.tester.army/docs/mobile), [SwiftUI example README](https://github.com/tester-army/e2e/blob/main/examples/with-swiftui/README.md), [launch post](https://e2e.tester.army/blog/introducing-e2e))
 - Physical iPhones need a team ID and signing (`AGENT_DEVICE_IOS_TEAM_ID`). Simulator use needs neither. ([mobile docs](https://e2e.tester.army/docs/mobile))
 
-**Fit for this repo.** e2e is a good candidate for the agentic and natural-language layer: "finish a note and check it lands in a drawer", with a deterministic check alongside. Three limits: it adds a Node toolchain to a Swift and Go repo, it is pre-1.0, and it only drives the app. The backend test mode in section 3 is still needed underneath it.
+**Fit for this repo.** e2e is a good candidate for the agentic and natural-language layer: "write a note, save it into a drawer, and check it shows up there", with a deterministic check alongside. Two limits: it adds a Node toolchain to a Swift-only repo, and it is pre-1.0.
 
 ### Other candidates considered
 
@@ -51,7 +51,7 @@ Research date: 2026-10-27. Versions were checked against GitHub releases on that
 | [QA Wolf](https://www.qawolf.com/solutions/ios-testing) | Managed QA service using Appium. | Real iPhones on their device farm, not your Simulator. It is a service, not a framework. |
 | Octomind | AI test generation. | No mobile support found. **Unverified.** |
 
-**Conclusion.** The owner's description matches TesterArmy's e2e: a new framework, literally named "e2e", launched about four weeks ago. I'm confident this is the one, but I can't confirm it is what the owner saw. If they meant something else, Maestro is the strongest established alternative with iOS Simulator support.
+**Conclusion.** The owner's description matches TesterArmy's e2e: a new framework, literally named "e2e", launched about four weeks before this research. I'm confident this is the one, but I can't confirm it is what the owner saw. If they meant something else, Maestro is the strongest established alternative with iOS Simulator support.
 
 ---
 
@@ -90,114 +90,12 @@ These come from the project's own invariants in VISION.md and the ADRs.
 
 | Invariant | Structural enforcement |
 |---|---|
-| Agents never hard-delete (ADR 0003) | The MCP package receives a `notes.AgentService` interface that has `Trash`, not `Delete`. Hard delete lives in a separate `internal/purge` package that only the 30-day job imports, enforced by depguard. |
-| Every write is a revision (ADR 0003) | Only `internal/notes` can import `internal/store`. `store` exposes no "update note text" except `AppendRevision(base RevisionID, ...)`. |
-| Plaintext never reaches the DB (ADR 0002) | Note content columns accept only a `crypt.Ciphertext` type. Its fields are unexported, so only the `crypt` package can construct one. |
-| Every record has `user_id` | Store methods take a `UserScope` value, not a raw ID, and queries are built from it. |
-| Time-based rules (5-minute draft, 30-day trash) | Inject a `Clock` interface. Ban `time.Now` and `Date()` elsewhere (layer 2). |
-| iOS: only the store touches SQLite | GRDB is a dependency of the `NoteStore` Swift package only, so other modules can't `import GRDB` because it isn't in their dependency graph. |
+| Typed text is never modified ([ADR 0003](../adr/0003-typed-text-is-never-modified.md)) | `NoteStorage` has one way to write a note's text: save exactly what the user typed. Title, drawer and corrections are written through separate methods that cannot touch the text. |
+| Deletes go to the trash first (VISION) | `NoteStorage` offers `trash` and `restore`, not `delete`. Removing a note for good happens only inside the store's 30-day purge. |
+| Time-based rules (5-minute draft, 30-day trash) | Pass the current time in as an argument or through a small clock type. `NoteCore` never reads the clock itself. |
+| Only the store touches SQLite ([ADR 0004](../adr/0004-sqlite-with-grdb-and-fts5-search.md)) | GRDB is a dependency of the `NoteStore` package only. This does not stop an import under Xcode on its own (see below), so a text check backs it up. |
 
-Go's [`internal/` directory rule](https://go.dev/doc/go1.4#internalpackages) is the built-in version of Matt's dependency-cruiser setup: the compiler rejects imports of `a/internal/x` from outside `a/`. Swift packages give the same thing, plus the `package` access level ([SE-0386](https://github.com/swiftlang/swift-evolution/blob/main/proposals/0386-package-access-modifier.md)).
-
-#### Go (layer 2)
-
-Current versions: golangci-lint [v2.15.0](https://github.com/golangci/golangci-lint/releases) (2026-10-16), staticcheck [2026.2.2](https://github.com/dominikh/go-tools/releases), gofumpt [v0.12.0](https://github.com/mvdan/gofumpt/releases), Go 1.27.3.
-
-- **golangci-lint v2 config** uses `version: "2"`. `linters.default` is one of `standard`, `all`, `none` or `fast`. Linters go in `linters.enable` and their settings in `linters.settings`; formatters have their own `formatters.enable` list. Available formatters: gci, gofmt, gofumpt, goimports, golines, swaggo. ([config file docs](https://golangci-lint.run/docs/configuration/file/), [formatters](https://golangci-lint.run/docs/formatters/))
-- **Linters confirmed in v2:** depguard, forbidigo, gocritic (with ruleguard), exhaustive, errcheck, wrapcheck, errorlint, nilnil, staticcheck, govet, gosec, revive, sqlclosecheck, rowserrcheck, contextcheck, noctx, nolintlint, forcetypeassert, err113, modernize, usetesting, testifylint, paralleltest. `exhaustruct` and `wsl` are deprecated in favor of `exhaustruct_v5` and `wsl_v5`. ([linters](https://golangci-lint.run/docs/linters/))
-- **nilaway** is not built in. It runs through golangci-lint's module plugin system: a `.custom-gcl.yml` names `go.uber.org/nilaway/cmd/gclplugin`, `golangci-lint custom` builds `./custom-gcl`, and the linter is configured as `linters.settings.custom.nilaway.type: module` with `include-pkgs`. ([nilaway README](https://github.com/uber-go/nilaway), [module plugins](https://golangci-lint.run/docs/plugins/module-plugins/))
-- **Custom rules:**
-  - Simplest: forbidigo patterns with a message. ([settings](https://golangci-lint.run/docs/linters/configuration/))
-  - Next: gocritic `ruleguard` with `rules: '${base-path}/ruleguard/rules-*.go'` and `failOn: dsl,import`, which gives AST pattern rules written in Go. ([settings](https://golangci-lint.run/docs/linters/configuration/), [go-ruleguard](https://github.com/quasilyte/go-ruleguard))
-  - Heaviest: a full `go/analysis` analyzer loaded as a module plugin ([example plugin](https://github.com/golangci/example-plugin-module-linter)).
-- **Outside golangci-lint**, `make check` should also run:
-  - `go vet ./...`
-  - `go test -race -shuffle=on ./...`
-  - `govulncheck ./...` ([golang.org/x/vuln](https://pkg.go.dev/golang.org/x/vuln/cmd/govulncheck))
-  - a short fuzz budget on parsers: `go test -fuzz=Fuzz... -fuzztime=10s` ([Go fuzzing](https://go.dev/doc/security/fuzz/))
-
-Sketch `.golangci.yml`. Settings keys follow the docs above; the module path is a placeholder.
-
-```yaml
-version: "2"
-linters:
-  default: standard            # errcheck, govet, ineffassign, staticcheck, unused
-  enable:
-    - bodyclose
-    - contextcheck
-    - depguard
-    - errorlint
-    - exhaustive
-    - forbidigo
-    - forcetypeassert
-    - gocritic
-    - gosec
-    - nilerr
-    - nilnil
-    - noctx
-    - nolintlint
-    - rowserrcheck
-    - sqlclosecheck
-    - wrapcheck
-    - modernize
-    - usetesting
-    - nilaway                  # module plugin, needs ./custom-gcl
-  settings:
-    errcheck:
-      check-type-assertions: true
-      check-blank: true
-    govet:
-      enable-all: true
-    nolintlint:
-      require-explanation: true
-      require-specific: true
-    depguard:
-      rules:
-        drivers:
-          deny:
-            - pkg: github.com/mattn/go-sqlite3
-              desc: use modernc.org/sqlite (ADR 0001, no cgo)
-            - pkg: math/rand$
-              desc: use crypto/rand or math/rand/v2
-        mcp-through-notes:
-          files: ["**/internal/mcp/**"]
-          deny:
-            - pkg: example.com/note/internal/store
-              desc: MCP writes must go through internal/notes so every edit is a revision (ADR 0003)
-            - pkg: example.com/note/internal/purge
-              desc: agents never hard-delete (ADR 0003)
-        no-fakes-in-prod:
-          files: ["!$test", "!**/testmode_e2e.go"]
-          deny:
-            - pkg: example.com/note/internal/testkit
-              desc: fakes are only wired in under the e2e build tag
-    forbidigo:
-      analyze-types: true
-      forbid:
-        - pattern: ^time\.Now$
-          msg: inject clock.Clock so tests can control time
-        - pattern: ^fmt\.Print.*$
-          msg: use log/slog
-        - pattern: ^log\.(Print|Fatal|Panic).*$
-          msg: use log/slog
-        - pattern: ^os\.Getenv$
-          msg: read configuration only in internal/config
-    gocritic:
-      enabled-checks: [ruleguard]
-      settings:
-        ruleguard:
-          rules: '${base-path}/tools/ruleguard/rules-*.go'
-          failOn: dsl,import
-    custom:
-      nilaway:
-        type: module
-        settings:
-          include-pkgs: example.com/note
-formatters:
-  enable: [gofumpt, goimports]
-```
-
-Use `linters.exclusions.rules` to exempt `internal/config` from the `os.Getenv` ban.
+Swift packages and the `package` access level ([SE-0386](https://github.com/swiftlang/swift-evolution/blob/main/proposals/0386-package-access-modifier.md)) are the Swift version of Matt's dependency-cruiser setup.
 
 #### Swift (layer 2)
 
@@ -212,18 +110,20 @@ Current versions: SwiftLint [0.65.1](https://github.com/realm/SwiftLint/releases
 | `SWIFT_UPCOMING_FEATURE_EXISTENTIAL_ANY: YES` | Requires `any P`, making existential costs visible ([SE-0335](https://github.com/swiftlang/swift-evolution/blob/main/proposals/0335-existential-any.md)). |
 | `SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY: YES` | A file must import a module to use its members, which keeps module boundaries honest ([SE-0444](https://github.com/swiftlang/swift-evolution/blob/main/proposals/0444-member-import-visibility.md)). |
 | `SWIFT_UPCOMING_FEATURE_INTERNAL_IMPORTS_BY_DEFAULT: YES` | Imports don't leak into a module's public API ([SE-0409](https://github.com/swiftlang/swift-evolution/blob/main/proposals/0409-access-level-on-imports.md)). |
-| `SWIFT_APPROACHABLE_CONCURRENCY: YES`, `SWIFT_DEFAULT_ACTOR_ISOLATION: MainActor` (UI target only) | Nonisolated async functions run on the caller's actor ([SE-0461](https://github.com/swiftlang/swift-evolution/blob/main/proposals/0461-async-function-isolation.md)), and UI code is MainActor by default ([SE-0466](https://github.com/swiftlang/swift-evolution/blob/main/proposals/0466-control-default-actor-isolation.md)). Keep the store and sync packages nonisolated. |
+| `SWIFT_APPROACHABLE_CONCURRENCY: YES`, `SWIFT_DEFAULT_ACTOR_ISOLATION: MainActor` (UI module only) | Nonisolated async functions run on the caller's actor ([SE-0461](https://github.com/swiftlang/swift-evolution/blob/main/proposals/0461-async-function-isolation.md)), and UI code is MainActor by default ([SE-0466](https://github.com/swiftlang/swift-evolution/blob/main/proposals/0466-control-default-actor-isolation.md)). Keep `NoteCore` and `NoteStore` nonisolated. |
 | `SWIFT_STRICT_MEMORY_SAFETY: YES` (optional) | Flags unsafe constructs in your own code ([SE-0458](https://github.com/swiftlang/swift-evolution/blob/main/proposals/0458-strict-memory-safety.md)). Try it, and keep it if it isn't noisy. |
 
-**Module boundaries.** Move code into local Swift packages, for example `NoteCore` (models, pure logic), `NoteStore` (GRDB), `NoteSync` (HTTP client) and `NoteUI`. Keep the app target as a thin shell. Each `Package.swift` lists allowed dependencies, so a forbidden import is a compile error. XcodeGen references local packages through its `packages:` key.
+**Module boundaries.** The code is split into local Swift packages, `NoteCore`, `NoteStore` and `NoteUI`, with a thin app target ([ADR 0005](../adr/0005-app-structure-and-enforced-boundaries.md)). Each `Package.swift` lists allowed dependencies, but that alone does not make a forbidden import a compile error. Xcode builds share module search paths, so a package can import a module it never declared. SwiftPM's `--explicit-target-dependency-import-check error` catches this, but only in `swift build`. ADR 0005 records how the boundaries are enforced instead. XcodeGen references local packages through its `packages:` key.
 
-**SwiftLint.** Settings below are from the [README](https://github.com/realm/SwiftLint):
+**SwiftLint.** Not needed for the first checks, which are plain text searches. It becomes worth installing when the rules outgrow `grep`. Settings below are from the [README](https://github.com/realm/SwiftLint):
 
 - `strict: true` turns warnings into failures.
 - `opt_in_rules` enables rules outside the default set; `analyzer_rules` lists rules that only `swiftlint analyze` runs.
 - `swiftlint analyze` needs `--compiler-log-path` from a clean `xcodebuild` log.
 - Regex `custom_rules` support `included`/`excluded` path regexes, `match_kinds`, `message` and `severity`. Swift-syntax custom rules require building SwiftLint with Bazel.
 - Rule identifiers below were checked against the repo's rule sources.
+
+The configuration below is a menu to pick from as rules are needed, not something to adopt in one go.
 
 ```yaml
 strict: true
@@ -262,7 +162,7 @@ custom_rules:
     severity: error
   no_raw_date:
     regex: '\bDate\(\)'
-    message: "Inject Clock so tests control time"
+    message: "Pass the time in so tests control it"
     severity: error
   grdb_only_in_store:
     regex: '^import GRDB'
@@ -279,63 +179,46 @@ custom_rules:
 
 Per the owner, Claude Code hooks are out of scope.
 
-- **`make check`** is the one command an agent runs and CI runs. It is ordered fastest first and fails on the first error: format check, lint (both languages), build, unit tests, then `golangci-lint`/`govulncheck` once Go exists. `make e2e` is separate and slower.
-- **Pre-commit.** The smallest option is a checked-in `.githooks/pre-commit` that runs `make check-fast` (format and lint on staged files), activated by `git config core.hooksPath .githooks` in `make setup`. [lefthook](https://github.com/evilmartians/lefthook) v2.2.2 (`lefthook.yml` with `pre-commit.jobs[]` using `glob`, `run`, `stage_fixed`) is worth it only if hooks get slow and need parallelism ([config docs](https://lefthook.dev/configuration/)). Pre-commit is a convenience; agents and humans can skip it with `--no-verify`, so CI decides.
+- **`make check`** is the one command an agent runs and CI runs. It is ordered fastest first and fails on the first error: format check, text checks, `swift test` for `NoteCore` and `NoteStore`, then the Xcode build and tests. `make e2e` is separate and slower.
+- **Pre-commit.** The smallest option is a checked-in `.githooks/pre-commit` that runs `make check-fast` (format and text checks on staged files), activated by `git config core.hooksPath .githooks` in `make setup`. [lefthook](https://github.com/evilmartians/lefthook) v2.2.2 (`lefthook.yml` with `pre-commit.jobs[]` using `glob`, `run`, `stage_fixed`) is worth it only if hooks get slow and need parallelism ([config docs](https://lefthook.dev/configuration/)). Pre-commit is a convenience; agents and humans can skip it with `--no-verify`, so CI decides.
 - **CI (GitHub Actions).**
   - The `macos-26` image has Xcode 26.x only. Xcode 27 runs on the preview label `runs-on: xcode-27` ([runner-images #14404](https://github.com/actions/runner-images/issues/14404)).
-  - Run Go jobs on `ubuntu-latest`.
   - macOS minutes are billed at $0.062/min against the 2,000 free minutes for private repos; public repos are free ([billing docs](https://docs.github.com/en/billing/concepts/product-billing/github-actions)). Keep iOS CI to `make check` plus a small e2e smoke run.
-- **CLAUDE.md** states the contract in a few lines: run `make check` before saying done, run `make e2e` for behavior changes, never add `// swiftlint:disable` or `//nolint` without a reason (nolintlint enforces this in Go), and when a mistake repeats, add a rule. By poteto's ranking this file is the weakest layer, so keep it short and let the tools enforce.
+- **CLAUDE.md** states the contract in a few lines: run `make check` before saying done, run `make e2e` for behavior changes, never add `// swiftlint:disable` without a reason, and when a mistake repeats, add a rule. By poteto's ranking this file is the weakest layer, so keep it short and let the tools enforce.
 
 ---
 
-## 3. Letting an agent test the whole app, integrated
+## 3. Letting an agent test the whole app
 
-The priority is the whole system: the iOS app in the Simulator, a real local Go server with its SQLite database, the AI job queue (fake or real provider), and the MCP endpoint. An agent should be able to start it with one command, drive it many ways, and check outcomes from several sides.
+With no server, "the whole system" is the app in the Simulator and its SQLite file. An agent should be able to start it in a known state with one command, drive it many ways, and check outcomes from several sides.
 
-### 3.1 One command to a running test system
+### 3.1 One command to a running app
 
-`make e2e-up` should do the following, in order, and be idempotent:
+`make sim-up` should do the following, in order, and be safe to run twice:
 
-1. **Build the server with `-tags e2e`** and start it on `127.0.0.1:<port>` with:
-   - a fresh SQLite file under `build/e2e/<run-id>/server.db`;
-   - the fake AI provider, the fake KMS, and a controllable clock;
-   - JSON `slog` output to `build/e2e/<run-id>/server.log`.
-   Litestream can replicate to a local `file` replica in the same directory, so restores can be tested too (**unverified** that the file replica type is still supported in the current Litestream release).
-2. **Seed fixtures**: users, drawers, tags, notes in every state (draft, finished, in a closed drawer, trashed 29 and 31 days ago), and agent OAuth grants. Seed content includes a unique canary string per note.
-3. **Build the app in an `E2E` configuration** (XcodeGen `configs:`), which sets the compilation condition `E2E`, adds `NSAllowsLocalNetworking` to that configuration's Info.plist only, and reads the server URL from launch arguments or the environment. Release builds can't contain the test hooks.
-4. **Create or reuse a dedicated simulator** (`xcrun simctl create Note-E2E ...`), boot it, `erase` it if asked for a clean run, `install` the `.app`, and `launch` it with environment such as `NOTE_SERVER_URL`. Grant permissions with `simctl privacy`.
-5. **Write `build/e2e/state.json`** with the server URL, MCP URL, a pre-minted agent token, the simulator UDID, the app bundle ID, the app container path (`simctl get_app_container <udid> com.rontho14.note data`), the server DB path and the log paths. Every later script and every agent reads this file instead of guessing.
+1. **Build the app in an `E2E` configuration** (XcodeGen `configs:`), which sets the compilation condition `E2E`. Code under that condition reads test launch arguments. Release builds can't contain the test hooks.
+2. **Create or reuse a dedicated simulator** (`xcrun simctl create Note-E2E ...`), boot it, `erase` it if asked for a clean run, and `install` the `.app`.
+3. **Launch the app with test arguments**, for example:
+   - reset local storage;
+   - load a named fixture: notes in every state (draft, saved, untitled, in each drawer, trashed 29 and 31 days ago) and drawers in a set order;
+   - shift the clock, for the 5-minute draft reopen and the 30-day trash;
+   - turn off animations.
+4. **Write `build/e2e/state.json`** with the simulator UDID, the app bundle ID, the app's data folder (`simctl get_app_container <udid> com.rontho14.note data`), the database path inside it and the log command. Every later script and every agent reads this file instead of guessing.
 
-The commands used are all in `xcrun simctl help` on Xcode 27.1: `create`, `boot`, `erase`, `install`, `launch`, `terminate`, `get_app_container`, `io ... screenshot`, `openurl`, `privacy`, `status_bar`, `spawn`, `location`, `push`.
+The commands used are all in `xcrun simctl help` on Xcode 27.1: `create`, `boot`, `erase`, `install`, `launch`, `terminate`, `get_app_container`, `io ... screenshot`, `openurl`, `privacy`, `status_bar`, `spawn`.
 
 Companion targets:
-- `make e2e-reset`: wipe the DB, re-seed, relaunch the app.
-- `make e2e-down`: stop everything.
-- `make e2e-logs`: tail server and app logs.
+- `make sim-reset`: wipe storage, load the fixture again, relaunch.
+- `make sim-down`: shut the simulator down.
+- `make sim-logs`: stream the app's logs.
 - `make e2e-invariants`: the checks in 3.4.
 - `make e2e`: up, run all scenarios, invariants, down.
 
-**Server test mode, guarded by the build tag.** Under `//go:build e2e`, the server registers a `/_test` API: `reset`, `seed?fixture=`, `clock/advance?d=`, `ai/mode?m=ok|slow|error|drop-content|offline`, `kms/mode`, `jobs/drain`, `state` (a decrypted JSON dump for assertions), and `token?agent=` (mints an agent token without the OAuth dance). The production binary is built without the tag. A test asserts `/_test/*` returns 404 in a default build, and the depguard rule above keeps fakes out of non-e2e code.
-
-**Fake AI provider.** It runs deterministically: wraps text in simple Markdown, derives a title from the first words, files the note by keyword, and picks tags by keyword. Its modes inject failures, so the VISION rules become testable:
-- `drop-content` returns output missing a word, and the rewrite must be rejected;
-- `offline` must leave the rewrite queued;
-- `slow` exercises timeouts.
-
-A `real` mode with the OpenAI key can be used by hand for smoke runs.
-
-**Fake KMS.** An in-process key-wrapping implementation behind the same interface as the real KMS. It counts unwrap calls, so tests can check caching and audit behavior. A `fail` mode tests the KMS-down path.
-
-**App test hooks (E2E config only).** These are:
-- launch arguments to reset local storage;
-- a fixed clock offset, for the 5-minute draft reopen;
-- turning off animations;
-- `os.Logger` with subsystem `com.rontho14.note`, so `xcrun simctl spawn <udid> log stream --predicate 'subsystem == "com.rontho14.note"'` captures app logs.
+**Logging.** The app logs through `os.Logger` with subsystem `com.rontho14.note`, so `xcrun simctl spawn <udid> log stream --predicate 'subsystem == "com.rontho14.note"'` captures them. Note text is never logged.
 
 Give every interactive element a stable `.accessibilityIdentifier`. Every driver below depends on it: XCUITest, Maestro, e2e, agent-device and AXe.
 
-### 3.2 Ways an agent drives the running system
+### 3.2 Ways an agent drives the running app
 
 **A. Exploratory, by the agent directly (no test code)**
 
@@ -347,72 +230,50 @@ Give every interactive element a stable `.accessibilityIdentifier`. Every driver
 | [ios-simulator-mcp](https://github.com/joshuayoes/ios-simulator-mcp) (v2.2.0) | `ui_describe_all`, `ui_tap`, `ui_type`, `ui_swipe`, `screenshot`, `record_video`, `install_app`, `launch_app`, `open_url`. | Uses Meta's idb (`idb_companion`). Mentioned in Anthropic's [Claude Code best practices](https://www.anthropic.com/engineering/claude-code-best-practices). |
 | [agent-device](https://github.com/callstackincubator/agent-device) (Callstack, v0.21.33) | CLI, MCP and Node API for agents: accessibility snapshots, deterministic taps, typing, simulator settings. It is e2e's mobile engine. | `npm i -g agent-device`. Simulator needs no signing. |
 | Maestro MCP | `maestro mcp` exposes `list_devices`, `inspect_screen`, `take_screenshot`, `run` (flows). | Needs Java. Cloud tools need a login; local ones don't. ([docs](https://docs.maestro.dev/getting-started/maestro-mcp)) |
-| `xcrun simctl` | Lifecycle, screenshots, URLs, permissions, location, logs, app container path. | Always available, so scripts should use it as the base layer. |
+| `xcrun simctl` | Lifecycle, screenshots, URLs, permissions, logs, app container path. | Always available, so scripts should use it as the base layer. |
 
 Pick one simulator MCP to avoid overlapping tools. In Claude Code Desktop, the built-in pane covers exploration. In the CLI, MobileBuildMCP is the most complete (build, test, logs, UI tree in one server).
 
 **B. Repeatable scenarios (committed code)**
 
-- **XCUITest via `xcodebuild test`.** This is the recommended main scripted driver. It is Apple-native, typed Swift (so SwiftLint and the compiler apply), needs no signing on the Simulator, and runs in CI. The UI test target can call the server's `/_test` API over URLSession to seed, advance the clock, switch AI modes and read state, so one test can span app and server. Use `-only-testing:` so an agent can run one scenario. Swift Testing is used for unit tests; whether it can host `XCUIApplication` UI tests in Xcode 27 is **unverified**, so assume UI tests stay on XCTest.
-- **Maestro flows** (optional). YAML is easy for an agent to write and read. `launchApp` supports iOS `arguments`, `clearState` and `clearKeychain` ([docs](https://docs.maestro.dev/api-reference/commands/launchapp)). Calling the `/_test` API from a flow's `runScript` relies on Maestro's JavaScript HTTP support (**unverified** on the current docs page). Adds a Java dependency.
-- **TesterArmy e2e** (optional, agentic layer). Natural-language steps such as "write a shopping list, finish it, and check it is filed in Home", paired with deterministic `getByTestId` checks. Point `app.appPath` at `build/DerivedData/Build/Products/E2E-iphonesimulator/Note.app`. Good for coverage of fuzzy flows (gestures, the swipe into view mode) without writing locators for every step. Agent steps need a model key.
+- **XCUITest via `xcodebuild test`.** This is the recommended main scripted driver. It is Apple-native, typed Swift (so the compiler and the checks apply), needs no signing on the Simulator, and runs in CI. Each test launches the app with the test arguments from 3.1, so it controls the fixture and the clock. Use `-only-testing:` so an agent can run one scenario. Swift Testing is used for unit tests; whether it can host `XCUIApplication` UI tests in Xcode 27 is **unverified**, so assume UI tests stay on XCTest.
+- **Maestro flows** (optional). YAML is easy for an agent to write and read. `launchApp` supports iOS `arguments`, `clearState` and `clearKeychain` ([docs](https://docs.maestro.dev/api-reference/commands/launchapp)). Adds a Java dependency.
+- **TesterArmy e2e** (optional, agentic layer). Natural-language steps such as "write a shopping list, save it into Home, and check it is listed there", paired with deterministic `getByTestId` checks. Point `app.appPath` at `build/DerivedData/Build/Products/E2E-iphonesimulator/Note.app`. Good for coverage of fuzzy flows (the swipes between screens, the flick into view mode) without writing locators for every step. Agent steps need a model key.
 
-**C. MCP side (agents as the system's users)**
+### 3.3 Scenario catalog
 
-- **Claude Code as a real MCP client.** `claude mcp add --transport http note-local <MCP URL from state.json>` with the minted token as a header. The agent then reads, creates, edits and trashes notes exactly as a production agent would, and checks the result in the app UI.
-- **MCP Inspector CLI** ([v2.12.0](https://github.com/modelcontextprotocol/inspector)) for scripted calls, for example `npx @modelcontextprotocol/inspector --cli http://127.0.0.1:8080/mcp --method tools/call --tool-name create_note --tool-arg text=... --header "Authorization: Bearer ..."`. URLs ending in `/mcp` default to streamable HTTP. It also supports OAuth from a config file, which can exercise the real OAuth flow once. ([CLI README](https://github.com/modelcontextprotocol/inspector/blob/main/clients/cli/README.md))
-- **Go SDK client tests** ([go-sdk v1.8.0](https://github.com/modelcontextprotocol/go-sdk)). For fast in-process tests, `mcp.NewInMemoryTransports()` connects a client and server without HTTP. For the e2e run, the streamable HTTP client points at the live server. The SDK also ships `auth` and `oauthex` packages for the OAuth side.
+Each scenario is a short test that uses the launch arguments from 3.1. They come from VISION.md and the ADRs:
 
-**D. Sync API.** curl, or a checked-in `.http`/script file, against the sync endpoints using the same token, to simulate a second device or a stale client.
-
-### 3.3 Scenario catalog: "in many different ways"
-
-Each scenario is a short script or test that uses `state.json`. These come straight from VISION.md and the ADRs:
-
-1. **Capture.** Launch, then confirm the keyboard is up, typing works, and an empty note isn't saved. Relaunch within 5 minutes to get the draft back with the cursor in place. Advance the clock 6 minutes and relaunch to get a blank note.
-2. **Finish with the AI healthy.** Swipe into view mode, run `jobs/drain`, then check the Markdown, title, drawer, tags (hidden in the UI but present in `state`), and a revision holding the pre-rewrite text. Revert with one tap.
-3. **Finish with the AI dropping content.** `ai/mode=drop-content`: the rewrite is rejected and the note is unchanged.
-4. **Finish with the AI offline.** The note renders as typed and the rewrite is queued. Switch back to `ok`, drain, and the rewrite is applied.
-5. **Re-finish.** No change means no AI call (count fake calls). An edited note gets a minimal rewrite, keeps its title, and keeps manual tags.
-6. **Agent edits through MCP while the app is closed.** Open the app: it syncs, the edit appears, and the revision is attributed to that agent.
-7. **Agent delete.** The note moves to trash and disappears from Latest. Advance the clock 31 days and run the purge: it's gone, and a note trashed for 29 days is still there.
-8. **Agent tries forbidden actions.** Changing drawers, tags or settings, or hard-deleting, fails with a clear error, and the DB is unchanged.
-9. **Grant revocation.** Revoke one agent's grant: its calls fail and another agent still works.
-10. **Closed drawer.** Its notes leave the main views, an agent can still read them, and the AI stops filing into it.
-11. **Offline phone.** Stop the server (or point at a dead port), edit on the phone, restart, reopen: the edit syncs. Every revision records its base revision.
-12. **Conflict.** An agent edits through MCP while the phone edits offline. Both revisions exist, whatever the resolution strategy becomes.
-13. **KMS failure.** `kms/mode=fail`: no plaintext is written, and the error is surfaced and logged.
-14. **Restore.** Stop the server, `litestream restore` to a new path, start on it: `state` matches.
+1. **Capture.** Launch, then confirm the keyboard is up and typing works. Leave an empty note and confirm nothing is saved.
+2. **Draft reopen.** Type, leave the app, relaunch within 5 minutes: the draft is back with the cursor in place. Shift the clock 6 minutes and relaunch: a blank note.
+3. **Save with the modal.** Flick to save an untitled note with no drawer: the modal appears. Save with nothing filled in: the note is untitled in `Unsorted`. Save another with a title and a drawer: both are stored. A note that already has a title saves with no modal.
+4. **Delete from the modal.** The note goes to the trash and leaves the list.
+5. **View mode.** Flick into view mode on a fixture note: headings, labels and lists are formatted, and dates and phone numbers are tappable. Correct a line by holding it; the correction persists after a relaunch.
+6. **Text is never changed.** For every scenario above, the stored text equals the typed text byte for byte.
+7. **Drawers.** Open a drawer in place, close it, and reorder drawers by dragging. The new order survives a relaunch and is the chip order in the save modal.
+8. **Trash.** Drag a note to the trash button. Open the trash sheet and restore it. Shift the clock 31 days: a note trashed 31 days ago is gone, and one trashed 29 days ago is still there.
+9. **Search.** Partial words, accented words and one-letter typos find the right notes. Exact matches rank above typo matches. Tapping a result opens the note at the matching line.
+10. **Themes.** Switch theme in settings: colors change and nothing else does.
+11. **Export.** Export to a folder: one Markdown file per note, with the text unchanged.
 
 ### 3.4 How an agent verifies outcomes
 
 - **Accessibility tree.** `snapshot_ui` (MobileBuildMCP), `ui_describe_all`, the agent-device snapshot, or XCUITest queries. Assert on identifiers and values, not pixels.
 - **Screenshots.** `xcrun simctl io <udid> screenshot out.png`, the MCP screenshot tools, or the Desktop pane. For regression checks, [swift-snapshot-testing](https://github.com/pointfreeco/swift-snapshot-testing) (1.19.7) on SwiftUI views in unit tests, with a pinned simulator model and OS, gives deterministic images.
-- **App database.** `$(xcrun simctl get_app_container <udid> com.rontho14.note data)/…/notes.sqlite`, opened with `sqlite3` read-only. The agent can check that the phone's local copy matches the server.
-- **Server database.** `sqlite3` on `server.db` for structure: revision chains, `user_id` on every row, trash timestamps. Use `/_test/state` for decrypted content.
-- **Logs.** `server.log` (JSON, filterable with `jq`), and the app log from `log stream`. A scenario fails on any `level=ERROR` it didn't expect.
+- **App database.** The database path from `state.json`, opened with `sqlite3` read-only.
+- **Logs.** The app log from `log stream`. A scenario fails on any error it didn't expect.
 - **Invariants (`make e2e-invariants`)**, run after every scenario:
-  - every revision's base exists;
-  - no note has zero revisions;
-  - no row lacks `user_id`;
-  - no seeded canary string appears in `server.db`, its WAL, or the Litestream replica (`grep -c` must be 0), which checks ADR 0002 end to end;
-  - agent-attributed revisions never come with a hard delete.
+  - every note's stored text matches what the scenario typed;
+  - no empty note is stored;
+  - every note is in exactly one drawer, or in `Unsorted`;
+  - the FTS index has exactly one entry per note, with matching text;
+  - no note sits in the trash for more than 30 days of app time.
 
-A project-local verification skill, following poteto's [feature-map pattern](https://github.com/poteto/verification-skill-example), tells a fresh agent all of this. It has one short file per feature area (capture, finish, drawers, MCP, sync), each covering how to reach the feature, how to drive it, and what to check, plus a sweep order for "did I break anything".
+A project-local verification skill, following poteto's [feature-map pattern](https://github.com/poteto/verification-skill-example), tells a fresh agent all of this. It has one short file per feature area (write, save, view, drawers, trash, search, export), each covering how to reach the feature, how to drive it, and what to check, plus a sweep order for "did I break anything".
 
-### 3.5 Secondary layers (still needed)
+### 3.5 Unit tests
 
-- **iOS unit tests.** [Swift Testing](https://developer.apple.com/xcode/swift-testing/) for `NoteCore` and `NoteStore`, using GRDB on an in-memory or temp-file database (`DatabaseQueue()` in memory). These run as SwiftPM package tests (fast, no simulator) or through the Xcode scheme.
-- **Go unit and integration tests.**
-  - [`net/http/httptest`](https://pkg.go.dev/net/http/httptest) for handlers.
-  - Real SQLite files in `t.TempDir()`; testcontainers isn't needed, because SQLite is embedded.
-  - [`testing/synctest`](https://pkg.go.dev/testing/synctest) for time-dependent job code.
-  - Native fuzzing for the content-drop check, Markdown handling and sync payload parsing ([docs](https://go.dev/doc/security/fuzz/)).
-  - Property tests with [rapid](https://github.com/flyingmutant/rapid) (`pgregory.net/rapid`), for example: for any input, a rewrite that passes the check contains every input word.
-  - Golden files with an `-update` flag for MCP tool schemas and sync responses.
-  - [testscript](https://pkg.go.dev/github.com/rogpeppe/go-internal/testscript) for CLI-level scenario scripts if the server gets admin commands.
-  - [goleak](https://github.com/uber-go/goleak) for goroutine leaks.
-- **MCP server tests.** In-memory transports for tool behavior, golden files for `tools/list` output, and the Inspector CLI in `make e2e`.
+[Swift Testing](https://developer.apple.com/xcode/swift-testing/) for `NoteCore` and `NoteStore`, using GRDB on an in-memory database (`DatabaseQueue()` in memory). These run as SwiftPM package tests with `swift test` on the Mac, fast and with no simulator. This is where the shape formatter and search ranking get their large test suites built from real notes.
 
 ### 3.6 Paid Apple account
 
@@ -429,31 +290,19 @@ Device testing stays manual through Xcode, with the 7-day free-profile limit not
 
 ## Proposed setup for this repo
 
-Ordered smallest useful first. Each step leaves `make check` green.
+Ordered smallest useful first. Each step leaves `make check` green. Checks are added when the code they protect exists, as ADR 0005 says.
 
-1. **Tighten `ios/project.yml` settings.** Add `SWIFT_UPCOMING_FEATURE_EXISTENTIAL_ANY`, `..._MEMBER_IMPORT_VISIBILITY`, `..._INTERNAL_IMPORTS_BY_DEFAULT` and `SWIFT_APPROACHABLE_CONCURRENCY` (all `YES`), plus `SWIFT_DEFAULT_ACTOR_ISOLATION: MainActor` on the app target.
-2. **Add `.swift-format` and `.swiftlint.yml`** (the config in section 2), with `make fmt`, `make lint-ios` (`xcrun swift-format lint --strict -r ios` plus `swiftlint lint --strict`), and `brew install swiftlint` documented in README.
-3. **Add `make check`** that runs `fmt-check`, `lint-ios`, `ios-build` and `ios-test`. Add a short CLAUDE.md section: "done means `make check` passes; behavior changes also need `make e2e`; repeated mistakes become rules."
-4. **Add accessibility identifiers and the first tests.** Add a `NoteTests` target (Swift Testing) and a `NoteUITests` target (XCUITest) to `project.yml`, with `make ios-test` running `xcodebuild test` on a named simulator. Adopt one `.accessibilityIdentifier` naming convention.
-5. **Add `scripts/sim`.** It creates and boots the `Note-E2E` device, then installs, launches with env, takes screenshots, prints the app container and streams logs. Expose it as `make sim-up`, `make sim-screenshot` and `make sim-logs`.
-6. **Add an `E2E` build configuration** in XcodeGen: the `E2E` compilation condition, `NSAllowsLocalNetworking` only there, the server URL from launch env, a clock offset, and animations off.
+1. **Tighten `ios/project.yml` settings.** Add `SWIFT_UPCOMING_FEATURE_EXISTENTIAL_ANY`, `..._MEMBER_IMPORT_VISIBILITY`, `..._INTERNAL_IMPORTS_BY_DEFAULT` and `SWIFT_APPROACHABLE_CONCURRENCY` (all `YES`), plus `SWIFT_DEFAULT_ACTOR_ISOLATION: MainActor` for UI code.
+2. **Create the packages.** Add `NoteCore`, `NoteStore` and `NoteUI` as local Swift packages and reduce the app target to wiring, per ADR 0005. Add the three import checks as text searches.
+3. **Add `make check`** that runs swift-format in lint mode, the text checks, `swift test` for `NoteCore` and `NoteStore`, and the Xcode build and tests. Add a short CLAUDE.md section: "done means `make check` passes; behavior changes also need `make e2e`; repeated mistakes become rules."
+4. **Add accessibility identifiers and the first tests.** Add a `NoteUITests` target (XCUITest) to `project.yml`, with `make ios-test` running `xcodebuild test` on a named simulator. Adopt one `.accessibilityIdentifier` naming convention.
+5. **Add `scripts/sim`.** It creates and boots the `Note-E2E` device, then installs, launches with test arguments, takes screenshots, prints the app container and streams logs. Expose it as `make sim-up`, `make sim-reset`, `make sim-down` and `make sim-logs`.
+6. **Add the `E2E` build configuration** in XcodeGen: the `E2E` compilation condition and the launch arguments for reset, fixture, clock shift and animations.
 7. **Set up pre-commit and CI.** `.githooks/pre-commit` runs `make check-fast`, and `make setup` sets `core.hooksPath`. `.github/workflows/check.yml` runs `make check` on `runs-on: xcode-27`.
-8. **Split the iOS app into local Swift packages** when GRDB lands: `NoteCore`, `NoteStore` (the only one depending on GRDB), `NoteUI`, and the app shell. Add the `grdb_only_in_store` and `no_raw_date` rules.
-9. **Bootstrap the Go server.**
-   - Use an `internal/` layout (`notes`, `store`, `crypt`, `purge`, `mcp`, `ai`, `kms`, `clock`, `config`, `testkit`), with the type-level invariants from section 2's Layer 1 table.
-   - Add `.golangci.yml`, `.custom-gcl.yml` (nilaway) and `tools/ruleguard/rules-*.go`.
-   - Extend `make check` with `gofumpt` check, `golangci-lint run`, `go vet`, `go test -race -shuffle=on ./...` and `govulncheck`.
-   - Add a Linux CI job.
-10. **Add the server test mode.** `-tags e2e` builds the `/_test` API, the fake AI provider with failure modes, the fake KMS, the controllable clock and seeded fixtures with canary strings. Add a test asserting `/_test` is absent from the default build.
-11. **Add `make e2e-up`, `e2e-reset`, `e2e-down`, `e2e-logs` and `build/e2e/state.json`**, which bring the integrated system up with one command.
-12. **Add `make e2e-invariants`**: revision chains, `user_id`, trash rules, and canary-not-in-DB/WAL/replica.
-13. **Set up MCP verification.**
-    - Go SDK in-memory tests for each tool.
-    - `scripts/mcp` wrapping the Inspector CLI with the token from `state.json`.
-    - A documented `claude mcp add --transport http note-local ...` line, so an agent session can act as a real client.
-14. **Build the scenario suite.** The section 3.3 catalog as XCUITest cases that call `/_test`, plus MCP scripts. Expose it as `make e2e`, with a smoke subset in CI.
-15. **Write a verification skill.** Add `skills/verify-note/` with a feature map (poteto's pattern) that tells a fresh agent how to bring the system up, drive each feature and check the evidence.
-16. **Optional, once the above works:**
+8. **Build the scenario suite as features land.** The 3.3 catalog as XCUITest cases, plus `make e2e-invariants`. Expose it as `make e2e`, with a smoke subset in CI.
+9. **Write a verification skill.** Add `skills/verify-note/` with a feature map (poteto's pattern) that tells a fresh agent how to bring the app up, drive each feature and check the evidence.
+10. **Add rules as they are needed.** The candidates listed in ADR 0005, installing SwiftLint when the rules outgrow text searches.
+11. **Optional, once the above works:**
     - try TesterArmy e2e for natural-language agentic scenarios, or Maestro flows, against the same `state.json`;
     - add Periphery `--strict` to `make check`;
     - add swift-snapshot-testing for key views;

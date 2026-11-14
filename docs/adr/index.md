@@ -6,3 +6,4 @@
 | [0002](0002-formatting-from-text-shape-without-ai.md) | Formatting from text shape, without AI | accepted |
 | [0003](0003-typed-text-is-never-modified.md) | Typed text is never modified | accepted |
 | [0004](0004-sqlite-with-grdb-and-fts5-search.md) | SQLite with GRDB and FTS5 search | accepted |
+| [0005](0005-app-structure-and-enforced-boundaries.md) | App structure and enforced boundaries | accepted |
