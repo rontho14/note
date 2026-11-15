@@ -89,6 +89,8 @@ Xcode does not enforce module boundaries on its own. Modules built together shar
 
 swift-format's lint runs in `make check` too. On top of its default rules it bans force unwraps, `try!` and implicitly unwrapped optionals outside tests.
 
+`scripts/check-errors.sh` fails when an error is swallowed: `2>/dev/null` or `|| true` in a script, the Makefile or the hook, and `try?` in app or package sources. Each of these once hid a real failure here. An exception sits on the line itself as a comment, `check-errors: allowed until YYYY-MM-DD by NAME: reason`, and fails again once its date passes.
+
 Candidates for later, each added when its code appears: no `Date()` in `NoteCore`, no networking code, an allowlist of dependencies, no values pasted into SQL text, no `print`, and a strict import build of `NoteCore` and `NoteStore` with `swift build`.
 
 ### Performance

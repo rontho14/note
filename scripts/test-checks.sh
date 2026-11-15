@@ -116,6 +116,7 @@ core=ios/Packages/NoteCore/Sources/NoteCore/Planted.swift
 ui=ios/Packages/NoteUI/Sources/NoteUI/Planted.swift
 store=ios/Packages/NoteStore/Sources/NoteStore/Planted.swift
 app=ios/Note/Planted.swift
+core_test=ios/Packages/NoteCore/Tests/NoteCoreTests/Planted.swift
 
 grdb="only NoteStore imports GRDB"
 store_in_ui="NoteUI never imports NoteStore"
@@ -199,7 +200,24 @@ expect_settings_fail "Note app target has SWIFT_STRICT_MEMORY_SAFETY = NO" \
 expect_settings_fail "Invalid manifest" "a NoteUI manifest that doesn't parse" \
     "$(replaced ios/Packages/NoteUI/Package.swift 'let package' 'let package = ')"
 
-for script in check-imports.sh check-settings.sh; do
+swallowed="errors are never swallowed"
+hidden_grep_errors='matches="$(grep -rn import ios 2>/dev/''null |''| true)"'
+hidden_removal_error='try? FileManager.default.removeItem(at: unfinishedCopy)'
+
+expect_fail "$swallowed" "a script that hides grep's errors" \
+    run_check check-errors.sh "$(planted scripts/planted.sh "$hidden_grep_errors")"
+expect_fail "$swallowed" "a try? in production code" \
+    run_check check-errors.sh "$(planted "$core" "import Foundation
+$hidden_removal_error")"
+expect_pass "a try? in a test file" run_check check-errors.sh "$(planted "$core_test" "$hidden_removal_error")"
+expect_pass "an exception that has not expired" \
+    run_check check-errors.sh "$(planted scripts/planted.sh \
+        'x=1 |''| true # check-errors: allowed until 2099-01-01 by test-checks: planted')"
+expect_fail "expired on 2020-01-01" "an exception that has expired" \
+    run_check check-errors.sh "$(planted scripts/planted.sh \
+        'x=1 |''| true # check-errors: allowed until 2020-01-01 by test-checks: planted')"
+
+for script in check-imports.sh check-settings.sh check-errors.sh; do
     expect_fail "can't be checked" "$script on a tree without the checked files" \
         run_check "$script" "$(mktemp -d "$scratch/empty.XXXXXX")"
     expect_pass "$script on the clean tree" run_check "$script" "$(fresh_case)"
@@ -207,7 +225,6 @@ done
 
 badly_formatted='struct  Spaced{let value=1}'
 force_unwrapped='let forced = Int("1")!'
-core_test=ios/Packages/NoteCore/Tests/NoteCoreTests/Planted.swift
 
 expect_fail "[Spacing]" "a badly formatted file" make -C "$(planted "$core" "$badly_formatted")" lint
 expect_pass "make fmt then make lint on a badly formatted file" \
