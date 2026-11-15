@@ -18,10 +18,7 @@ Implement the requested work yourself, one task at a time. Gate every task behin
 
 ## Write the code
 
-- Follow `ponytail` and `tdd`.
-- Follow the repository's existing patterns, layering, naming, and canonical helpers.
-- Write no comments. When code seems to need one, rename or restructure it instead. Write only the comment text the repository or its toolchain requires: license headers, doc comments its lint or conventions demand, and tool directives.
-- Name functions, variables, types, files, and tests so they explain themselves.
+- Follow `craft` and `tdd`.
 - Never reference the specification, task numbers, or planning text in code, tests, identifiers, file names, or commit messages. Describe the behavior itself.
 
 ## Per task
@@ -29,10 +26,12 @@ Implement the requested work yourself, one task at a time. Gate every task behin
 Take tasks in dependency order, one at a time. Never implement tasks in parallel.
 
 1. Implement the task, including any debt carried into it.
-2. Produce the `tdd` completion evidence: failing-before, passing-after, relevant adjacent validation, and the coverage bar or the alternative recorded by `setup`. Do not start a review without it.
-3. Run the [review loop](#review-loop) with the prompt `Run /code-judo.`
-4. When the task passes, set its `Status` to `COMPLETED` and its `Review Rejections` to the number of `[REJECT]` rounds in `TASKS.md`.
-5. Commit the task's code and ledger update together, using `commit` when it is installed.
+2. Produce the `tdd` completion evidence: failing-before, passing-after, relevant adjacent validation, and the map from each changed behavior to its test. Do not start a review without it.
+3. Run the lint, test, and build commands from the `TASKS.md` pre-review gate, or without `TASKS.md`, the repository's own commands for them. Fix every failure.
+4. Prove the task's `Success Criteria` with the repository's verification skill, or its formal verification skill when the task touches the code that skill covers.
+5. Run the [review loop](#review-loop) with the prompt `Run /code-judo.`
+6. When the task passes, set its `Status` to `COMPLETED` and its `Review Rejections` to the number of `[REJECT]` rounds in `TASKS.md`.
+7. Commit the task's code and ledger update together, using `commit` when it is installed.
 
 ## Review loop
 
@@ -41,6 +40,7 @@ Take tasks in dependency order, one at a time. Never implement tasks in parallel
 3. Triage every finding:
    - Accept code-quality findings by default. Be strict.
    - Reject a finding only when it contradicts a recorded decision: the specification, an ADR, an explicit user decision, or an established repository pattern. Record a one-line reason naming that decision. Preference is not a reason.
+   - Also reject a finding when applying it would break a `craft` parameter: logic, security, readability, or performance. Record a one-line reason naming the parameter and what would break.
    - Ignore `Debt` unless it is worth fixing. Carry debt worth fixing into the next task, or into the final review when no task remains.
 4. Fix the accepted findings, rerun the focused checks, and start a new round.
 5. The loop passes when the latest review is `[APPROVE]` or contains only findings rejected with a recorded reason.
