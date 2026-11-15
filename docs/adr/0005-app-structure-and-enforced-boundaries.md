@@ -95,6 +95,17 @@ swift-format's lint runs in `make check` too. On top of its default rules it ban
 
 Candidates for later, each added when its code appears: no `Date()` in `NoteCore`, no networking code, an allowlist of dependencies, no values pasted into SQL text, no `print`, and a strict import build of `NoteCore` and `NoteStore` with `swift build`.
 
+### Settled details
+
+These came up in review again and again. Each was decided on purpose, so a review that raises one needs new information.
+
+- `NoteDatabase.defaultLocation(fileManager:)` returns `<Application Support>/Note/notes.sqlite` and creates the folder. The `FileManager` is a parameter so tests never write into the Mac's real Application Support.
+- Opening the database tries once more after any failure, about 200 ms later. Then the app crashes with only the SQLite result code. This is the author's choice, and the opening step is injected so tests can make it fail.
+- The app target keeps the opened store in a property until the first screen that reads notes takes it.
+- `save` is one bound SQL upsert that keeps the first `createdAt`. Reads decode through `NoteRecord`, an internal GRDB record. Dates are stored in GRDB's text format, at millisecond precision.
+- Every `Package.swift` writes the strict settings out in full, because manifests can't share code. `check-settings.sh` guards the copies.
+- `scripts/test-checks.sh` lists each required setting by hand instead of reading the list in `check-settings.sh`. A test that takes its expected values from the code it tests can't notice that code dropping one.
+
 ### Performance
 
 - `NoteCore` and `NoteStore` contain no iOS-only code, so they build and test on the Mac with `swift test`, with no simulator. Formatter and search tests run there against large sets of notes.

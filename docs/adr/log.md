@@ -6,3 +6,4 @@
 - 2026-11-10: Created [0003](0003-typed-text-is-never-modified.md), accepted. Nothing but the user's typing may change a note's text.
 - 2026-11-10: Created [0004](0004-sqlite-with-grdb-and-fts5-search.md), accepted. One local store for notes and the search index.
 - 2026-11-13: Created [0005](0005-app-structure-and-enforced-boundaries.md), accepted. Agents follow a structure only as far as `make check` enforces it.
+- 2026-11-15: Updated [0005](0005-app-structure-and-enforced-boundaries.md). Added the error and single-owner checks, and a Settled details section for decisions reviews kept reopening.
