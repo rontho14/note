@@ -1,18 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+source "$(dirname "$0")/check-lib.sh"
+
 root="$(cd "${1:-$(dirname "$0")/..}" && pwd)"
 cd "$root"
 
-swift_folders=(ios/Note ios/Packages/*/Sources)
+set_swift_source_folders check-errors
 shell_files=(Makefile .githooks/* scripts/*.sh)
-
-for path in "${swift_folders[@]}" "${shell_files[@]}"; do
-    if [[ ! -e "$path" ]]; then
-        echo "check-errors: $path is missing, so its error handling can't be checked" >&2
-        exit 2
-    fi
-done
+require_paths check-errors "${shell_files[@]}"
 
 check='
     function violate(message) {
@@ -47,5 +43,5 @@ check='
 today="$(date +%F)"
 failed=0
 awk -v today="$today" "$check" "${shell_files[@]}" || failed=1
-find "${swift_folders[@]}" -name '*.swift' -exec awk -v today="$today" "$check" {} + || failed=1
+find "${swift_source_folders[@]}" -name '*.swift' -exec awk -v today="$today" "$check" {} + || failed=1
 exit "$failed"

@@ -8,3 +8,4 @@
 - 2026-11-13: Created [0005](0005-app-structure-and-enforced-boundaries.md), accepted. Agents follow a structure only as far as `make check` enforces it.
 - 2026-11-15: Updated [0005](0005-app-structure-and-enforced-boundaries.md). Added the error and single-owner checks, and a Settled details section for decisions reviews kept reopening.
 - 2026-11-15: Updated [0005](0005-app-structure-and-enforced-boundaries.md). `make check` runs a UI test on the Simulator, `make ios-test-devices` runs it on more devices, and screens follow an accessibility identifier convention.
+- 2026-11-15: Updated [0005](0005-app-structure-and-enforced-boundaries.md). Added `NoteTelemetry` as a fourth package, the only code that imports `os`, with a check for stray `print` calls.

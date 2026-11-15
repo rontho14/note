@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+source "$(dirname "$0")/check-lib.sh"
+
 root="$(cd "${1:-$(dirname "$0")/..}" && pwd)"
 cd "$root"
 
@@ -27,12 +29,7 @@ app_settings=(
 
 manifests=(ios/Packages/*/Package.swift)
 
-for file in ios/project.yml "${manifests[@]}"; do
-    if [[ ! -f "$file" ]]; then
-        echo "check-settings: $file is missing, so its settings can't be checked" >&2
-        exit 2
-    fi
-done
+require_paths check-settings ios/project.yml "${manifests[@]}"
 
 failed=0
 

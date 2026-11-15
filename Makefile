@@ -6,7 +6,7 @@ DERIVED_DATA := build/DerivedData
 SWIFT_SOURCES = $(shell find $(IOS_DIR)/Note $(IOS_DIR)/NoteE2ETests $(IOS_DIR)/Packages -name '*.swift' -not -path '*/.build/*')
 
 .DEFAULT_GOAL := ios-build
-.PHONY: setup require-xcodegen fmt lint ios-project ios-build ios-test ios-test-devices check-imports check-settings check-errors check-owners check-fast test-checks test-packages check clean
+.PHONY: setup require-xcodegen fmt lint ios-project ios-build ios-test ios-test-devices check-imports check-settings check-errors check-owners check-logging check-fast test-checks test-packages check clean
 
 # Install the pre-commit hook and confirm the tools the build needs.
 setup: require-xcodegen
@@ -55,8 +55,11 @@ check-errors:
 check-owners:
 	scripts/check-owners.sh
 
+check-logging:
+	scripts/check-logging.sh
+
 # The quick checks the pre-commit hook runs.
-check-fast: lint check-imports check-settings check-errors check-owners
+check-fast: lint check-imports check-settings check-errors check-owners check-logging
 
 # Plants a violation of each rule in a scratch copy and expects its check to fail.
 test-checks:

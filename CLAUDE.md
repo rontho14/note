@@ -25,7 +25,8 @@ A rule that gets broken twice gets a check in `make check`. When a correction re
 
 | Rule | Enforced by |
 |---|---|
-| Only `NoteStore` imports GRDB. `NoteUI` never imports `NoteStore`. `NoteCore` imports only Foundation. | `scripts/check-imports.sh` |
+| Only `NoteStore` imports GRDB. `NoteUI` never imports `NoteStore`. `NoteCore` imports only Foundation. Only `NoteTelemetry` imports `os` or `OSLog`. | `scripts/check-imports.sh` |
+| No `print`, `debugPrint`, `dump` or `NSLog`. | `scripts/check-logging.sh` |
 | The strict compiler settings stay on in every `Package.swift` and the app target. | `scripts/check-settings.sh` |
 | Code is formatted. No force unwraps, `try!` or implicitly unwrapped optionals outside tests. | swift-format lint, configured in `.swift-format` |
 | Errors are never swallowed: no `2>/dev/null` or `\|\| true` in scripts, no `try?` in app or package sources. | `scripts/check-errors.sh` |
@@ -40,4 +41,5 @@ A rule that gets broken twice gets a check in `make check`. When a correction re
 | New `scripts/test-checks.sh` cases go through `expect_fail`, `expect_pass` and the existing fixture helpers. | Review only |
 | A name says its main side effect. A parameter that only tests use needs a recorded reason. | Review only: a judgment call |
 | Settled decisions in the ADRs are not reopened in review without new information. | Review only |
+| Build today what can be built today. Linear issues are guidance, not a schedule: never put off work because an issue plans it for later. Put off only what would need temporary code. | Review only |
 | Commit straight to `main`. | Review only |

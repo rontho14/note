@@ -1,9 +1,11 @@
 import NoteStore
+import NoteTelemetry
 import NoteUI
 import SwiftUI
 
 @main
 struct NoteApp: App {
+    private let launch = LaunchMeasurement.begin()
     private let storage: SQLiteNoteStorage
 
     init() {
@@ -17,6 +19,7 @@ struct NoteApp: App {
     var body: some Scene {
         WindowGroup {
             RootScreen()
+                .onAppear { launch.recordLaunched() }
         }
     }
 }

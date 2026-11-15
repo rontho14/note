@@ -10,6 +10,8 @@ packages:
     path: Packages/NoteCore
   NoteStore:
     path: Packages/NoteStore
+  NoteTelemetry:
+    path: Packages/NoteTelemetry
   NoteUI:
     path: Packages/NoteUI
 settings:
@@ -31,6 +33,7 @@ targets:
     sources: [Note]
     dependencies:
       - package: NoteStore
+      - package: NoteTelemetry
       - package: NoteUI
     scheme:
       testTargets: [NoteE2ETests]

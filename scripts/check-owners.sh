@@ -1,17 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+source "$(dirname "$0")/check-lib.sh"
+
 root="$(cd "${1:-$(dirname "$0")/..}" && pwd)"
 cd "$root"
 
 scripts=(.githooks/* scripts/*.sh)
 
-for path in ios/project.yml "${scripts[@]}"; do
-    if [[ ! -e "$path" ]]; then
-        echo "check-owners: $path is missing, so its owners can't be checked" >&2
-        exit 2
-    fi
-done
+require_paths check-owners ios/project.yml "${scripts[@]}"
 
 awk '
     function violate(rule, message) {

@@ -115,6 +115,7 @@ expect_settings_fail() {
 core=ios/Packages/NoteCore/Sources/NoteCore/Planted.swift
 ui=ios/Packages/NoteUI/Sources/NoteUI/Planted.swift
 store=ios/Packages/NoteStore/Sources/NoteStore/Planted.swift
+telemetry=ios/Packages/NoteTelemetry/Sources/NoteTelemetry/Planted.swift
 app=ios/Note/Planted.swift
 ui_test=ios/NoteE2ETests/Planted.swift
 core_test=ios/Packages/NoteCore/Tests/NoteCoreTests/Planted.swift
@@ -122,11 +123,13 @@ core_test=ios/Packages/NoteCore/Tests/NoteCoreTests/Planted.swift
 grdb="only NoteStore imports GRDB"
 store_in_ui="NoteUI never imports NoteStore"
 core_only_foundation="NoteCore imports only Foundation"
+os_in_telemetry="only NoteTelemetry imports os or OSLog"
 
 expect_import_fail "$grdb" "$core" "import GRDB"
 expect_import_fail "$grdb" "$ui" "import GRDB"
 expect_import_fail "$grdb" "$app" "import GRDB"
 expect_import_fail "$grdb" "$ui_test" "import GRDB"
+expect_import_fail "$grdb" "$core_test" "import GRDB"
 expect_import_fail "$store_in_ui" "$ui" "import NoteStore"
 expect_import_fail "$core_only_foundation" "$core" "import SwiftUI"
 expect_import_fail "$core_only_foundation" "$core" "import FoundationExtras"
@@ -146,7 +149,16 @@ for form in \
     expect_import_fail "$store_in_ui" "$ui" "$form"
 done
 
+for file in "$ui" "$store" "$app" "$ui_test" "$core_test"; do
+    for form in "import os" "import OSLog" "import os.log"; do
+        expect_import_fail "$os_in_telemetry" "$file" "$form"
+    done
+done
+
 expect_import_pass "$store" "import GRDB"
+expect_import_pass "$telemetry" "import os"
+expect_import_pass ios/Packages/NoteTelemetry/Tests/NoteTelemetryTests/Planted.swift "import os"
+expect_import_pass ios/Packages/NoteStore/Tests/NoteStoreTests/Planted.swift "import GRDB"
 expect_import_pass "$core" "import Foundation"
 expect_import_pass "$app" "import NoteStore"
 expect_import_pass "$ui" "import NoteStoreKit"
@@ -228,7 +240,17 @@ expect_fail "Info.plist keys live in the target's info: properties" "project.yml
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_UILaunchScreen_Generation: YES')"
 
-for script in check-imports.sh check-settings.sh check-errors.sh check-owners.sh; do
+no_print="no print, debugPrint, dump or NSLog"
+
+for file in "$app" "$store" "$core_test"; do
+    for call in 'print("planted")' 'debugPrint("planted")' 'dump(1)' 'NSLog("planted")'; do
+        expect_fail "$no_print" "'$call' in $file" run_check check-logging.sh "$(planted "$file" "$call")"
+    done
+done
+expect_pass "a commented-out print" run_check check-logging.sh "$(planted "$app" '// print("planted")')"
+expect_pass "a call to printer(" run_check check-logging.sh "$(planted "$app" 'printer("planted")')"
+
+for script in check-imports.sh check-settings.sh check-errors.sh check-owners.sh check-logging.sh; do
     expect_fail "can't be checked" "$script on a tree without the checked files" \
         run_check "$script" "$(mktemp -d "$scratch/empty.XXXXXX")"
     expect_pass "$script on the clean tree" run_check "$script" "$(fresh_case)"
