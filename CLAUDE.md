@@ -39,7 +39,7 @@ A rule that gets broken twice gets a check in `make check`. When a correction re
 | Never edit `ios/Note.xcodeproj`. | It is generated from `ios/project.yml` and gitignored. |
 | Never add a dependency without an ADR. | Review only |
 | Never edit a migration that has shipped. | Review only, until the upgrade test arrives with the second migration |
-| A change to behavior a doc describes updates that doc in the same commit. | Review only: a judgment call |
+| A change to behavior a doc describes updates that doc in the same commit. A doc names where a value lives, such as a Makefile variable, a script or a type, and never copies the value: no counts, device names or lists. | Review only: a judgment call |
 | New `scripts/test-checks.sh` cases go through `expect_fail`, `expect_pass` and the existing fixture helpers. | Review only |
 | A name says its main side effect. A parameter that only tests use needs a recorded reason. | Review only: a judgment call |
 | Settled decisions in the ADRs are not reopened in review without new information. | Review only |

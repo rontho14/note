@@ -121,6 +121,7 @@ These came up in review again and again. Each was decided on purpose, so a revie
 - The app target keeps the opened store in a property until the first screen that reads notes takes it.
 - `save` is one bound SQL upsert that keeps the first `createdAt`. Reads decode through `NoteRecord`, an internal GRDB record. Dates are stored in GRDB's text format, at millisecond precision.
 - Every `Package.swift` writes the strict settings out in full, because manifests can't share code. `check-settings.sh` guards the copies.
+- `NoteTelemetry`'s `Event`, `Field` and `Op` stay typed even with one case each. No case takes a free-form `String`, which is what lets a line be logged as public, and each new case is a one-line diff that review can question. Replacing them with string literals, or adding cases before code logs them, reopens this.
 - Logs and signposts use the subsystem `com.rontho14.note`, a fixed name that log filters and scripts match. It reads like the bundle ID but is not derived from it, so renaming the bundle ID leaves it as it is.
 - `LaunchMeasurement` runs on the main actor, where the app begins and records it, so it needs no lock.
 - `LaunchMeasurement.recordLaunched()` returns the launch duration, or nil on every call after the first. The app ignores it. Tests read it to prove the launch is logged once, without reading the unified log.
