@@ -59,7 +59,7 @@ for manifest in "${manifests[@]}"; do
         ' "${required[@]}" <<<"$dump")"
 done
 
-(cd ios && xcodegen generate --quiet)
+make -s -C "$root" ios-project
 build_settings="$(xcodebuild -showBuildSettings -json -project ios/Note.xcodeproj -target Note)"
 
 for pair in "${app_settings[@]}"; do
