@@ -19,8 +19,8 @@ awk '
     FILENAME == "ios/project.yml" && match($0, /^[[:space:]]*(INFOPLIST_KEY_[A-Za-z0-9_~]*|GENERATE_INFOPLIST_FILE|INFOPLIST_FILE):/) {
         key = substr($0, RSTART, RLENGTH - 1)
         sub(/^[[:space:]]*/, "", key)
-        violate("Info.plist keys live in the target'"'"'s info: properties", \
-            "sets " key ". Put the key under the target'"'"'s info: properties in ios/project.yml")
+        violate("Info.plist keys live in the target\047s info: properties in ios/project.yml", \
+            "sets " key ". Put the key under the target\047s info: properties")
     }
 
     FILENAME != "ios/project.yml" && /xcodegen[[:space:]]+generate/ {

@@ -9,3 +9,4 @@
 - 2026-11-15: Updated [0005](0005-app-structure-and-enforced-boundaries.md). Added the error and single-owner checks, and a Settled details section for decisions reviews kept reopening.
 - 2026-11-15: Updated [0005](0005-app-structure-and-enforced-boundaries.md). `make check` runs a UI test on the Simulator, `make ios-test-devices` runs it on more devices, and screens follow an accessibility identifier convention.
 - 2026-11-15: Updated [0005](0005-app-structure-and-enforced-boundaries.md). Added `NoteTelemetry` as a fourth package, the only code that imports `os`, with a check for stray `print` calls.
+- 2026-11-15: Updated [0005](0005-app-structure-and-enforced-boundaries.md). `make check-fast` runs every `scripts/check-*.sh`, and `check-rules.sh` fails when a rule a check names drifts from CLAUDE.md.

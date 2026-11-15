@@ -234,7 +234,7 @@ expect_fail "expired on 2020-01-01" "an exception that has expired" \
 expect_fail "only the Makefile runs xcodegen" "a script that runs xcodegen itself" \
     run_check check-owners.sh "$(replaced scripts/check-settings.sh 'make -s -C "$root" ios-project' \
         '(cd ios && xcodegen gen''erate --quiet)')"
-expect_fail "Info.plist keys live in the target's info: properties" "project.yml generating Info.plist keys" \
+expect_fail "Info.plist keys live in the target's info: properties in ios/project.yml" "project.yml generating Info.plist keys" \
     run_check check-owners.sh "$(replaced ios/project.yml '        TARGETED_DEVICE_FAMILY: "1"' \
         '        TARGETED_DEVICE_FAMILY: "1"
         GENERATE_INFOPLIST_FILE: YES
@@ -256,6 +256,13 @@ for script in "$repo"/scripts/check-*.sh; do
         run_check "$script" "$(mktemp -d "$scratch/empty.XXXXXX")"
     expect_pass "$script on the clean tree" run_check "$script" "$(fresh_case)"
 done
+
+stated="every rule a check names is stated in CLAUDE.md"
+
+expect_fail "$stated" "a check whose rule name drifted from CLAUDE.md" \
+    run_check check-rules.sh "$(replaced scripts/check-imports.sh 'imports os or OSLog", imported)' 'imports os", imported)')"
+expect_fail "$stated" "a check whose rule has no CLAUDE.md row" \
+    run_check check-rules.sh "$(planted scripts/check-planted.sh 'printf "planted rule: %s:%d\n" file 1')"
 
 expect_fail "planted rule" "a new check script that fails" \
     make -C "$(planted scripts/check-planted.sh 'echo "planted rule: always fails" >&2; exit 1')" check-fast

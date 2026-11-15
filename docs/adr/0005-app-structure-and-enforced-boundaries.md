@@ -106,6 +106,8 @@ swift-format's lint runs in `make check` too. On top of its default rules it ban
 
 `scripts/check-logging.sh` keeps logging in `NoteTelemetry`. It fails on a call to `print`, `debugPrint`, `dump` or `NSLog` in app, package or test code. No other module can create a `Logger` or `OSSignposter`, because both need `import os`, which `check-imports.sh` allows only in `NoteTelemetry` and its tests. Each unit of work writes one line, and its duration goes in a signpost interval and a field on that line. `Telemetry.begin(_:)` takes an `Op` and returns an interval whose `end()` closes the signpost and writes the op's completion event with its duration, so no caller can do one without the other. The interval is noncopyable and `end()` consumes it, so the compiler rejects ending it twice.
 
+`scripts/check-rules.sh` keeps CLAUDE.md's rules table in step with the checks: every rule name a check prints must appear, word for word, in the row that names that check. `make check-fast` runs every `scripts/check-*.sh`, so a new check needs no wiring.
+
 `scripts/check-owners.sh` keeps one owner for facts that were once kept in two places: only the Makefile runs xcodegen (scripts call `make ios-project`), and Info.plist keys live only in each target's XcodeGen `info:` properties, never in `INFOPLIST_KEY_*` or `GENERATE_INFOPLIST_FILE` settings.
 
 Candidates for later, each added when its code appears: no `Date()` in `NoteCore`, no networking code, an allowlist of dependencies, no values pasted into SQL text, and a strict import build of `NoteCore` and `NoteStore` with `swift build`.
