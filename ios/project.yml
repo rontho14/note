@@ -8,6 +8,8 @@ options:
 packages:
   NoteCore:
     path: Packages/NoteCore
+  NoteStore:
+    path: Packages/NoteStore
   NoteUI:
     path: Packages/NoteUI
 settings:
@@ -28,13 +30,21 @@ targets:
     platform: iOS
     sources: [Note]
     dependencies:
+      - package: NoteStore
       - package: NoteUI
     scheme: {}
+    info:
+      path: Note/Info.plist
+      properties:
+        CFBundleDisplayName: Note
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        LSRequiresIPhoneOS: true
+        UISupportedInterfaceOrientations~iphone: [UIInterfaceOrientationPortrait]
+        UILaunchScreen:
+          UIColorName: LaunchBackground
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.rontho14.note
         TARGETED_DEVICE_FAMILY: "1"
-        GENERATE_INFOPLIST_FILE: YES
-        INFOPLIST_KEY_CFBundleDisplayName: Note
-        INFOPLIST_KEY_UILaunchScreen_Generation: YES
-        INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone: UIInterfaceOrientationPortrait
+        ASSETCATALOG_COMPILER_APPICON_NAME: ""
