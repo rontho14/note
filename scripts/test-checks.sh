@@ -217,7 +217,16 @@ expect_fail "expired on 2020-01-01" "an exception that has expired" \
     run_check check-errors.sh "$(planted scripts/planted.sh \
         'x=1 |''| true # check-errors: allowed until 2020-01-01 by test-checks: planted')"
 
-for script in check-imports.sh check-settings.sh check-errors.sh; do
+expect_fail "only the Makefile runs xcodegen" "a script that runs xcodegen itself" \
+    run_check check-owners.sh "$(replaced scripts/check-settings.sh 'make -s -C "$root" ios-project' \
+        '(cd ios && xcodegen gen''erate --quiet)')"
+expect_fail "Info.plist keys live in the target's info: properties" "project.yml generating Info.plist keys" \
+    run_check check-owners.sh "$(replaced ios/project.yml '        TARGETED_DEVICE_FAMILY: "1"' \
+        '        TARGETED_DEVICE_FAMILY: "1"
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES')"
+
+for script in check-imports.sh check-settings.sh check-errors.sh check-owners.sh; do
     expect_fail "can't be checked" "$script on a tree without the checked files" \
         run_check "$script" "$(mktemp -d "$scratch/empty.XXXXXX")"
     expect_pass "$script on the clean tree" run_check "$script" "$(fresh_case)"
