@@ -65,6 +65,15 @@ Dependencies point one way. `NoteStore` and `NoteUI` depend on `NoteCore`, and n
 
 Each screen is a SwiftUI view and one `@Observable` model, in files named after the screen, such as `NotesScreen.swift` and `NotesModel.swift`. The model receives a `NoteStorage` when it is created and uses `NoteCore` for any rule. A view holds no logic beyond layout.
 
+Every interactive element, and each screen's outermost view, has an accessibility identifier, so UI tests find elements without depending on their text:
+
+- An identifier is lowercase words joined by dots, `<screen>.<element>`, where `<screen>` is the screen's file name without `Screen`: `write.text`, `notes.list`.
+- A screen's outermost view is identified by `<screen>` alone, such as `root` or `write`.
+- A repeated element appends the note or drawer ID: `notes.row.<uuid>`.
+- Every identifier is a constant in `AccessibilityID` in `NoteUI`. The UI tests read the same constant, so one file owns each string.
+
+UI tests attach a screenshot at each state worth seeing, named after the identifier of the screen shown. When one test captures the same screen twice, the later shots add `.<state>`, such as `write.saved`, because `scripts/run-ui-tests.sh` fails on two screenshots with the same name.
+
 Lists observe the database and refresh themselves when it changes, as in GRDB's demo app, instead of reloading after every save.
 
 SwiftUI is the default. A screen moves to UIKit only when a measurement shows SwiftUI is too slow or cannot do the job. The write screen is the likely case, because it must restore the cursor and handle long notes. NetNewsWire follows the same rule.
@@ -77,7 +86,9 @@ This record sets the structure. It does not try to automate all of it up front.
 - A rule that gets broken twice gets a check.
 - Every check runs in `make check`, so a broken rule fails the build with a message that names the rule.
 
-Three checks come with the packages. `scripts/check-imports.sh` reads every import in the app and package sources, in any form (`@testable`, access levels, `import struct`), and needs no extra tool:
+`make check` also launches the app. The UI tests in the `NoteE2ETests` target run on a simulator of the check device, `IOS_CHECK_DEVICE` in the Makefile, with the newest iOS that supports it, so a screen that crashes or loses its identifier fails the build. UI tests use XCTest, because Xcode doesn't make Swift Testing available to UI test bundles. `make ios-test-devices` runs the same tests on more iPhones and on iOS 26, the app's minimum. Both export the screenshots to `build/ui-tests/`. The device run happens on request, not in `make check`. `scripts/run-ui-tests.sh` creates the simulators these runs need, named `Note <device> <iOS version>`, and touches no other simulator. A missing iOS runtime stops the run, because downloading one is the author's call.
+
+Three checks come with the packages. `scripts/check-imports.sh` reads every import in the app, package and UI test sources, in any form (`@testable`, access levels, `import struct`), and needs no extra tool:
 
 - Only `NoteStore` imports GRDB.
 - `NoteUI` never imports `NoteStore`.
@@ -91,7 +102,7 @@ swift-format's lint runs in `make check` too. On top of its default rules it ban
 
 `scripts/check-errors.sh` fails when an error is swallowed: `2>/dev/null` or `|| true` in a script, the Makefile or the hook, and `try?` in app or package sources. Each of these once hid a real failure here. An exception sits on the line itself as a comment, `check-errors: allowed until YYYY-MM-DD by NAME: reason`, and fails again once its date passes.
 
-`scripts/check-owners.sh` keeps one owner for facts that were once kept in two places: only the Makefile runs xcodegen (scripts call `make ios-project`), and Info.plist keys live only in the Note target's XcodeGen `info:` properties, never in `INFOPLIST_KEY_*` or `GENERATE_INFOPLIST_FILE` settings.
+`scripts/check-owners.sh` keeps one owner for facts that were once kept in two places: only the Makefile runs xcodegen (scripts call `make ios-project`), and Info.plist keys live only in each target's XcodeGen `info:` properties, never in `INFOPLIST_KEY_*` or `GENERATE_INFOPLIST_FILE` settings.
 
 Candidates for later, each added when its code appears: no `Date()` in `NoteCore`, no networking code, an allowlist of dependencies, no values pasted into SQL text, no `print`, and a strict import build of `NoteCore` and `NoteStore` with `swift build`.
 

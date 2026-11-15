@@ -25,11 +25,21 @@ Build for the iOS Simulator:
 make
 ```
 
-Before calling a change done, run everything: lint, the import and compiler-settings checks, the package tests on the Mac, and the Simulator build.
+Before calling a change done, run everything: lint, the import and compiler-settings checks, the package tests on the Mac, and the UI tests on the check device, `IOS_CHECK_DEVICE` in the [Makefile](Makefile).
 
 ```bash
 make check
 ```
+
+`make ios-test` runs only the UI tests, and writes their screenshots to `build/ui-tests/<device> <iOS version>/`. `ONLY=NoteE2ETests/LaunchTests/testLaunchShowsRootScreen` runs a single one.
+
+To see the app on several iPhones, and on iOS 26, the oldest version it supports:
+
+```bash
+make ios-test-devices
+```
+
+It runs the UI tests on every device in `IOS_TEST_DEVICES` in the [Makefile](Makefile), each written `<device>@<iOS>`. The simulators it needs are created on the first run. The iOS runtimes are not: install iOS 26 once in Xcode > Settings > Components.
 
 `make fmt` fixes formatting that `make check` rejects.
 

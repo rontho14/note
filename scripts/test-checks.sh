@@ -116,6 +116,7 @@ core=ios/Packages/NoteCore/Sources/NoteCore/Planted.swift
 ui=ios/Packages/NoteUI/Sources/NoteUI/Planted.swift
 store=ios/Packages/NoteStore/Sources/NoteStore/Planted.swift
 app=ios/Note/Planted.swift
+ui_test=ios/NoteE2ETests/Planted.swift
 core_test=ios/Packages/NoteCore/Tests/NoteCoreTests/Planted.swift
 
 grdb="only NoteStore imports GRDB"
@@ -125,6 +126,7 @@ core_only_foundation="NoteCore imports only Foundation"
 expect_import_fail "$grdb" "$core" "import GRDB"
 expect_import_fail "$grdb" "$ui" "import GRDB"
 expect_import_fail "$grdb" "$app" "import GRDB"
+expect_import_fail "$grdb" "$ui_test" "import GRDB"
 expect_import_fail "$store_in_ui" "$ui" "import NoteStore"
 expect_import_fail "$core_only_foundation" "$core" "import SwiftUI"
 expect_import_fail "$core_only_foundation" "$core" "import FoundationExtras"

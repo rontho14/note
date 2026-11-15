@@ -4,7 +4,7 @@ set -euo pipefail
 root="$(cd "${1:-$(dirname "$0")/..}" && pwd)"
 cd "$root"
 
-scanned=(ios/Note ios/Packages/*/Sources)
+scanned=(ios/Note ios/NoteE2ETests ios/Packages/*/Sources)
 
 for folder in "${scanned[@]}"; do
     if [[ ! -d "$folder" ]]; then

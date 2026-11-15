@@ -23,7 +23,7 @@ awk '
         key = substr($0, RSTART, RLENGTH - 1)
         sub(/^[[:space:]]*/, "", key)
         violate("Info.plist keys live in the target'"'"'s info: properties", \
-            "sets " key ". Put the key under the Note target'"'"'s info: properties in ios/project.yml")
+            "sets " key ". Put the key under the target'"'"'s info: properties in ios/project.yml")
     }
 
     FILENAME != "ios/project.yml" && /xcodegen[[:space:]]+generate/ {

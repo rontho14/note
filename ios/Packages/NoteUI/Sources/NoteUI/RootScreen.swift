@@ -5,6 +5,7 @@ public struct RootScreen: View {
 
     public var body: some View {
         Text("Note")
+            .accessibilityIdentifier(AccessibilityID.root)
     }
 }
 

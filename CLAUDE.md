@@ -32,6 +32,7 @@ A rule that gets broken twice gets a check in `make check`. When a correction re
 | Scripts generate the Xcode project with `make ios-project`. Info.plist keys live in the target's `info:` properties in `ios/project.yml`. | `scripts/check-owners.sh` |
 | Every check fails on a planted violation and names its rule. | `scripts/test-checks.sh` |
 | Text is stored byte for byte. | `NoteStorageTests` |
+| Every interactive element and each screen's outermost view has an accessibility identifier, a constant in `AccessibilityID` named by the convention in ADR 0005. | Review only |
 | Never edit `ios/Note.xcodeproj`. | It is generated from `ios/project.yml` and gitignored. |
 | Never add a dependency without an ADR. | Review only |
 | Never edit a migration that has shipped. | Review only, until the upgrade test arrives with the second migration |
