@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-source "$(dirname "$0")/check-lib.sh"
+source "$(dirname "$0")/lib.sh"
 
 root="$(cd "${1:-$(dirname "$0")/..}" && pwd)"
 cd "$root"

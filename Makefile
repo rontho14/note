@@ -3,10 +3,11 @@ IOS_CHECK_DEVICE ?= iPhone 14 Pro Max@latest
 IOS_TEST_DEVICES ?= $(IOS_CHECK_DEVICE),iPhone 15@latest,iPhone 17 Pro@latest,iPhone 17e@latest,iPhone 14 Pro Max@26
 DEVICES ?= $(IOS_CHECK_DEVICE)
 DERIVED_DATA := build/DerivedData
+CHECKS := $(patsubst scripts/%.sh,%,$(wildcard scripts/check-*.sh))
 SWIFT_SOURCES = $(shell find $(IOS_DIR)/Note $(IOS_DIR)/NoteE2ETests $(IOS_DIR)/Packages -name '*.swift' -not -path '*/.build/*')
 
 .DEFAULT_GOAL := ios-build
-.PHONY: setup require-xcodegen fmt lint ios-project ios-build ios-test ios-test-devices check-imports check-settings check-errors check-owners check-logging check-fast test-checks test-packages check clean
+.PHONY: setup require-xcodegen fmt lint ios-project ios-build ios-test ios-test-devices $(CHECKS) check-fast test-checks test-packages check clean
 
 # Install the pre-commit hook and confirm the tools the build needs.
 setup: require-xcodegen
@@ -43,23 +44,12 @@ ios-test: ios-project
 ios-test-devices: DEVICES = $(IOS_TEST_DEVICES)
 ios-test-devices: ios-test
 
-check-imports:
-	scripts/check-imports.sh
-
-check-settings:
-	scripts/check-settings.sh
-
-check-errors:
-	scripts/check-errors.sh
-
-check-owners:
-	scripts/check-owners.sh
-
-check-logging:
-	scripts/check-logging.sh
+# Every scripts/check-<name>.sh is a target named check-<name>, and check-fast runs them all.
+$(CHECKS): check-%: scripts/check-%.sh
+	bash $<
 
 # The quick checks the pre-commit hook runs.
-check-fast: lint check-imports check-settings check-errors check-owners check-logging
+check-fast: lint $(CHECKS)
 
 # Plants a violation of each rule in a scratch copy and expects its check to fail.
 test-checks:

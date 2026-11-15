@@ -250,11 +250,15 @@ done
 expect_pass "a commented-out print" run_check check-logging.sh "$(planted "$app" '// print("planted")')"
 expect_pass "a call to printer(" run_check check-logging.sh "$(planted "$app" 'printer("planted")')"
 
-for script in check-imports.sh check-settings.sh check-errors.sh check-owners.sh check-logging.sh; do
+for script in "$repo"/scripts/check-*.sh; do
+    script="$(basename "$script")"
     expect_fail "can't be checked" "$script on a tree without the checked files" \
         run_check "$script" "$(mktemp -d "$scratch/empty.XXXXXX")"
     expect_pass "$script on the clean tree" run_check "$script" "$(fresh_case)"
 done
+
+expect_fail "planted rule" "a new check script that fails" \
+    make -C "$(planted scripts/check-planted.sh 'echo "planted rule: always fails" >&2; exit 1')" check-fast
 
 badly_formatted='struct  Spaced{let value=1}'
 force_unwrapped='let forced = Int("1")!'

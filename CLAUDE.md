@@ -32,6 +32,7 @@ A rule that gets broken twice gets a check in `make check`. When a correction re
 | Errors are never swallowed: no `2>/dev/null` or `\|\| true` in scripts, no `try?` in app or package sources. | `scripts/check-errors.sh` |
 | Scripts generate the Xcode project with `make ios-project`. Info.plist keys live in the target's `info:` properties in `ios/project.yml`. | `scripts/check-owners.sh` |
 | Every check fails on a planted violation and names its rule. | `scripts/test-checks.sh` |
+| A check is a `scripts/check-<name>.sh`. `make check-fast` runs every such file, so a new check needs no wiring. | The `CHECKS` glob in the Makefile, tested by `scripts/test-checks.sh` |
 | Text is stored byte for byte. | `NoteStorageTests` |
 | Every interactive element and each screen's outermost view has an accessibility identifier, a constant in `AccessibilityID` named by the convention in ADR 0005. | Review only |
 | Never edit `ios/Note.xcodeproj`. | It is generated from `ios/project.yml` and gitignored. |
