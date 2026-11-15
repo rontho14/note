@@ -1,7 +1,7 @@
 ---
 type: decision
 title: App structure and enforced boundaries
-description: The iOS code is split into NoteCore, NoteStore and NoteUI plus a thin app target, with dependencies pointing one way. Each screen is a view and one observable model. Checks are added as the code they protect is written, starting with three import rules.
+description: The iOS code is split into NoteCore, NoteStore and NoteUI plus a thin app target, with dependencies pointing one way. Each screen is a view and one observable model. Checks are added as the code they protect is written, starting with three import rules and the strict compiler settings.
 tags: [architecture, modules, swift, quality, performance, security]
 generated:
   by: claude-opus-5-5
@@ -83,7 +83,7 @@ Three checks come with the packages, because each is a one-line text search and 
 - `NoteUI` never imports `NoteStore`.
 - `NoteCore` imports nothing but Foundation.
 
-Swift 6 language mode with warnings as errors is already on in `project.yml`, so data races fail the build today.
+A fourth check keeps the compiler strict, so data races and other unsafe code fail the build. The app target builds in Swift 6 language mode. Every package manifest and the app target turn on the `ExistentialAny`, `MemberImportVisibility` and `InternalImportsByDefault` upcoming features, approachable concurrency, strict memory safety and warnings as errors. `NoteUI` and the app target also default to `MainActor` isolation; `NoteCore` and `NoteStore` stay nonisolated because they run off the main thread. `scripts/check-settings.sh` reads the settings SwiftPM and Xcode actually resolve, through `swift package dump-package` and `xcodebuild -showBuildSettings`, and fails `make check`, naming the setting, when one is removed, commented out or overridden.
 
 Xcode does not enforce module boundaries on its own. Modules built together share search paths, so a package can import a module it never declared. That is why the import rules are text checks, not something the package manifests guarantee.
 
@@ -107,7 +107,7 @@ Candidates for later, each added when its code appears: no `Date()` in `NoteCore
 - Every change has an obvious place to go: a rule in `NoteCore`, SQL in `NoteStore`, a screen in `NoteUI`.
 - The formatter, search ranking and the database are tested without launching the app.
 - The first feature costs a little more setup: three packages instead of one app target.
-- At the start only the three import rules are checked. The other rules hold by convention and review until a check is added, so early on they can be broken without the build noticing.
+- At the start only the three import rules and the strict compiler settings are checked. The other rules hold by convention and review until a check is added, so early on they can be broken without the build noticing.
 - Text checks can be fooled by unusual spellings. They catch honest mistakes, not deliberate evasion.
 - `NoteCore` and `NoteStore` cannot use UIKit or other iOS-only APIs.
 - `NoteUI` cannot build its previews from `NoteStore`. The app target or a preview helper has to supply an in-memory store.

@@ -1,4 +1,4 @@
-import Foundation
+public import Foundation
 
 public struct NoteID: Hashable, Sendable {
     public let rawValue: UUID
