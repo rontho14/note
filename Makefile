@@ -1,12 +1,25 @@
 IOS_DIR := ios
 DERIVED_DATA := build/DerivedData
+SWIFT_SOURCES = $(shell find $(IOS_DIR)/Note $(IOS_DIR)/Packages -name '*.swift' -not -path '*/.build/*')
 
 .DEFAULT_GOAL := ios-build
-.PHONY: ios-project ios-build check-imports check-settings test-checks check clean
+.PHONY: setup require-xcodegen fmt lint ios-project ios-build check-imports check-settings check-fast test-checks check clean
+
+# Install the pre-commit hook and confirm the tools the build needs.
+setup: require-xcodegen
+	git config core.hooksPath .githooks
+
+require-xcodegen:
+	@command -v xcodegen >/dev/null || { echo "xcodegen not found: brew install xcodegen"; exit 1; }
+
+fmt:
+	xcrun swift-format format --in-place $(SWIFT_SOURCES)
+
+lint:
+	xcrun swift-format lint --strict $(SWIFT_SOURCES)
 
 # Generate ios/Note.xcodeproj from ios/project.yml.
-ios-project:
-	@command -v xcodegen >/dev/null || { echo "xcodegen not found: brew install xcodegen"; exit 1; }
+ios-project: require-xcodegen
 	cd $(IOS_DIR) && xcodegen generate --quiet
 
 # Build the app for the iOS Simulator. Simulator builds need no signing.
@@ -24,12 +37,15 @@ check-imports:
 check-settings:
 	scripts/check-settings.sh
 
+# The quick checks the pre-commit hook runs.
+check-fast: lint check-imports check-settings
+
 # Plants a violation of each rule in a scratch copy and expects its check to fail.
 test-checks:
 	scripts/test-checks.sh
 
-# Everything that must pass before a change is done.
-check: check-imports check-settings test-checks ios-build
+# Everything that must pass before a change is done, fastest first.
+check: check-fast test-checks ios-build
 
 clean:
 	rm -rf build $(IOS_DIR)/Note.xcodeproj

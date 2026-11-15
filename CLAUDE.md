@@ -19,7 +19,7 @@ The documents in `docs/` are the source of truth.
 
 ## Rules
 
-- Done means `make check` passes. Until that target exists, `make` must build the app.
+- Done means `make check` passes. Run `make setup` once to install the pre-commit hook.
 - A rule that gets broken twice gets a check in `make check`.
 - Never edit `ios/Note.xcodeproj`. XcodeGen generates it from `ios/project.yml`.
 - Never add a dependency without an ADR.

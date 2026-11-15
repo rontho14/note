@@ -5,7 +5,8 @@ repo="$(cd "$(dirname "$0")/.." && pwd)"
 scratch="$(mktemp -d)"
 trap 'rm -rf "$scratch"' EXIT
 
-rsync -a --exclude Note.xcodeproj --exclude .build "$repo/ios" "$scratch/"
+mkdir "$scratch/repo"
+(cd "$repo" && git ls-files -co --exclude-standard -z) | rsync -a --from0 --files-from=- "$repo/" "$scratch/repo/"
 failures="$scratch/failures"
 touch "$failures"
 
@@ -13,40 +14,50 @@ fail() {
     echo "test-checks: $1" >>"$failures"
 }
 
-fresh_case() {
-    local case_root
-    case_root="$(mktemp -d "$scratch/case.XXXXXX")"
-    cp -R "$scratch/ios" "$case_root/ios"
-    echo "$case_root"
-}
-
 expect_fail() {
-    local check="$1" rule="$2" case_root="$3" change="$4"
+    local rule="$1" change="$2"
+    shift 2
     {
         local output
-        if output="$("$repo/scripts/$check" "$case_root" 2>&1)"; then
-            fail "$change passed $check, expected \"$rule\""
+        if output="$("$@" 2>&1)"; then
+            fail "$change passed, expected \"$rule\""
         elif [[ "$output" != *"$rule"* ]]; then
-            fail "$change failed $check without naming \"$rule\": $output"
+            fail "$change failed without naming \"$rule\": $output"
         fi
     } &
 }
 
 expect_pass() {
-    local check="$1" case_root="$2" change="$3"
+    local change="$1"
+    shift
     {
         local output
-        if ! output="$("$repo/scripts/$check" "$case_root" 2>&1)"; then
-            fail "$change failed $check: $output"
+        if ! output="$("$@" 2>&1)"; then
+            fail "$change failed: $output"
         fi
     } &
+}
+
+run_check() {
+    "$repo/scripts/$1" "$2"
+}
+
+plant() {
+    mkdir -p "$(dirname "$1/$2")"
+    printf '%s\n' "$3" >"$1/$2"
+}
+
+fresh_case() {
+    local case_root
+    case_root="$(mktemp -d "$scratch/case.XXXXXX")"
+    cp -R "$scratch/repo/." "$case_root"
+    echo "$case_root"
 }
 
 planted() {
     local case_root
     case_root="$(fresh_case)"
-    mkdir -p "$(dirname "$case_root/$1")"
-    printf '%s\n' "$2" >"$case_root/$1"
+    plant "$case_root" "$1" "$2"
     echo "$case_root"
 }
 
@@ -65,12 +76,40 @@ replaced() {
     echo "$case_root"
 }
 
+commit_in() {
+    if [[ "$1" != "$scratch"/* || ! -d "$1/.git" ]]; then
+        echo "test-checks: refusing to commit outside a scratch repository: '$1'" >&2
+        return 2
+    fi
+    git -C "$1" -c user.name=test-checks -c user.email=test-checks@example.invalid commit -q "${@:2}"
+}
+
+hooked_case_with() {
+    local case_root
+    case_root="$(fresh_case)"
+    git -C "$case_root" init -q
+    git -C "$case_root" add -A
+    commit_in "$case_root" --no-verify -m baseline
+    make -C "$case_root" setup >/dev/null
+    plant "$case_root" "$1" "$2"
+    git -C "$case_root" add -A
+    echo "$case_root"
+}
+
+formatted_then_linted() {
+    make -C "$1" fmt && make -C "$1" lint
+}
+
 expect_import_fail() {
-    expect_fail check-imports.sh "$1" "$(planted "$2" "$3")" "'$3' in $2"
+    expect_fail "$1" "'$3' in $2" run_check check-imports.sh "$(planted "$2" "$3")"
 }
 
 expect_import_pass() {
-    expect_pass check-imports.sh "$(planted "$1" "$2")" "'$2' in $1"
+    expect_pass "'$2' in $1" run_check check-imports.sh "$(planted "$1" "$2")"
+}
+
+expect_settings_fail() {
+    expect_fail "$1" "$2" run_check check-settings.sh "$3"
 }
 
 core=ios/Packages/NoteCore/Sources/NoteCore/Planted.swift
@@ -123,23 +162,20 @@ for manifest in "$repo"/ios/Packages/*/Package.swift; do
         '.treatAllWarnings(as: .error)|treatAllWarnings:error'; do
         written="${setting%%|*}"
         reported="${setting#*|}"
-        expect_fail check-settings.sh "target lacks $reported" "$(without "$manifest" "$written")" \
-            "$manifest without $written"
+        expect_settings_fail "target lacks $reported" "$manifest without $written" "$(without "$manifest" "$written")"
     done
 done
 
-expect_fail check-settings.sh "NoteUI target lacks defaultIsolation:MainActor" \
-    "$(replaced ios/Packages/NoteUI/Package.swift ' + [.defaultIsolation(MainActor.self)]' '')" \
-    "NoteUI without default MainActor isolation"
+expect_settings_fail "NoteUI target lacks defaultIsolation:MainActor" "NoteUI without default MainActor isolation" \
+    "$(replaced ios/Packages/NoteUI/Package.swift ' + [.defaultIsolation(MainActor.self)]' '')"
 
-expect_fail check-settings.sh "NoteCore target lacks strictMemorySafety" \
-    "$(replaced ios/Packages/NoteCore/Package.swift ', swiftSettings: strictSettings' '')" \
-    "NoteCore's target without the strict settings"
+expect_settings_fail "NoteCore target lacks strictMemorySafety" "NoteCore's target without the strict settings" \
+    "$(replaced ios/Packages/NoteCore/Package.swift ', swiftSettings: strictSettings' '')"
 
-expect_fail check-settings.sh "NoteCoreTests target lacks strictMemorySafety" \
+expect_settings_fail "NoteCoreTests target lacks strictMemorySafety" \
+    "NoteCore with a test target that has no strict settings" \
     "$(replaced ios/Packages/NoteCore/Package.swift 'targets: [.target(' \
-        'targets: [.testTarget(name: "NoteCoreTests", dependencies: ["NoteCore"]), .target(')" \
-    "NoteCore with a test target that has no strict settings"
+        'targets: [.testTarget(name: "NoteCoreTests", dependencies: ["NoteCore"]), .target(')"
 
 for setting in \
     SWIFT_VERSION \
@@ -150,24 +186,43 @@ for setting in \
     SWIFT_APPROACHABLE_CONCURRENCY \
     SWIFT_STRICT_MEMORY_SAFETY \
     SWIFT_DEFAULT_ACTOR_ISOLATION; do
-    expect_fail check-settings.sh "Note app target has $setting" "$(without ios/project.yml "$setting:")" \
-        "project.yml without $setting"
+    expect_settings_fail "Note app target has $setting" "project.yml without $setting" \
+        "$(without ios/project.yml "$setting:")"
 done
 
-expect_fail check-settings.sh "Note app target has SWIFT_STRICT_MEMORY_SAFETY = NO" \
+expect_settings_fail "Note app target has SWIFT_STRICT_MEMORY_SAFETY = NO" \
+    "the app target overriding strict memory safety" \
     "$(replaced ios/project.yml '        PRODUCT_BUNDLE_IDENTIFIER' \
         "        SWIFT_STRICT_MEMORY_SAFETY: NO
-        PRODUCT_BUNDLE_IDENTIFIER")" \
-    "the app target overriding strict memory safety"
+        PRODUCT_BUNDLE_IDENTIFIER")"
 
-expect_fail check-settings.sh "Invalid manifest" \
-    "$(replaced ios/Packages/NoteUI/Package.swift 'let package' 'let package = ')" \
-    "a NoteUI manifest that doesn't parse"
+expect_settings_fail "Invalid manifest" "a NoteUI manifest that doesn't parse" \
+    "$(replaced ios/Packages/NoteUI/Package.swift 'let package' 'let package = ')"
 
-for check in check-imports.sh check-settings.sh; do
-    expect_fail "$check" "can't be checked" "$(mktemp -d "$scratch/empty.XXXXXX")" "a tree without the checked files"
-    expect_pass "$check" "$(fresh_case)" "the clean tree"
+for script in check-imports.sh check-settings.sh; do
+    expect_fail "can't be checked" "$script on a tree without the checked files" \
+        run_check "$script" "$(mktemp -d "$scratch/empty.XXXXXX")"
+    expect_pass "$script on the clean tree" run_check "$script" "$(fresh_case)"
 done
+
+badly_formatted='struct  Spaced{let value=1}'
+force_unwrapped='let forced = Int("1")!'
+core_test=ios/Packages/NoteCore/Tests/NoteCoreTests/Planted.swift
+
+expect_fail "[Spacing]" "a badly formatted file" make -C "$(planted "$core" "$badly_formatted")" lint
+expect_pass "make fmt then make lint on a badly formatted file" \
+    formatted_then_linted "$(planted "$core" "$badly_formatted")"
+expect_fail "[NeverForceUnwrap]" "a force unwrap in production code" \
+    make -C "$(planted "$core" "$force_unwrapped")" lint
+expect_pass "a force unwrap in a test file" \
+    make -C "$(planted "$core_test" "import Testing
+$force_unwrapped")" lint
+
+expect_fail "[Spacing]" "committing a badly formatted file" \
+    commit_in "$(hooked_case_with "$core" "$badly_formatted")" -m planted
+expect_fail "$store_in_ui" "committing a broken import rule" \
+    commit_in "$(hooked_case_with "$ui" "import NoteStore")" -m planted
+expect_pass "committing a clean file" commit_in "$(hooked_case_with "$core" "let planted = 1")" -m planted
 
 wait
 
