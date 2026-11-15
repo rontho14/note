@@ -10,6 +10,12 @@ struct DatabaseLocationTests {
         ) throws {}
     }
 
+    let folder: TemporaryFolder
+
+    init() throws {
+        folder = try TemporaryFolder()
+    }
+
     @Test func theDefaultLocationIsInsideApplicationSupport() throws {
         let applicationSupport = try #require(
             FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first)
@@ -22,7 +28,7 @@ struct DatabaseLocationTests {
     }
 
     @Test func aDatabaseOpenedOnDiskIsNotExcludedFromBackup() throws {
-        let location = try URL.newTemporaryFolder().appending(path: "notes.sqlite")
+        let location = folder.url.appending(path: "notes.sqlite")
 
         _ = try NoteDatabase.openOnDisk(at: location)
 

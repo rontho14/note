@@ -119,7 +119,7 @@ Export writes notes as Markdown files into a folder the user picks in Files. The
 ## Engineering
 
 - The app is split into small Swift packages with strict compiler settings and lint rules, so the build rejects bad code.
-- One command, `make check`, formats, lints, builds and tests. GitHub Actions runs it on every change.
+- One command, `make check`, lints, builds and tests. A pre-commit hook runs its fast part. GitHub Actions will run it on every change.
 - UI tests drive the app in the Simulator.
 - The shape formatting and search get large test suites built from real notes.
 - Speed is tested. Launch to keyboard-up and search time have budgets that fail the build when exceeded.

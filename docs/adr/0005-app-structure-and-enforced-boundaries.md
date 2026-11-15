@@ -1,7 +1,7 @@
 ---
 type: decision
 title: App structure and enforced boundaries
-description: The iOS code is split into NoteCore, NoteStore and NoteUI plus a thin app target, with dependencies pointing one way. Each screen is a view and one observable model. Checks are added as the code they protect is written, starting with three import rules and the strict compiler settings.
+description: The iOS code is split into NoteCore, NoteStore and NoteUI plus a thin app target, with dependencies pointing one way. Each screen is a view and one observable model. Checks are added as the code they protect is written, starting with three import rules, the strict compiler settings and the swift-format lint.
 tags: [architecture, modules, swift, quality, performance, security]
 generated:
   by: claude-opus-5-5
@@ -77,7 +77,7 @@ This record sets the structure. It does not try to automate all of it up front.
 - A rule that gets broken twice gets a check.
 - Every check runs in `make check`, so a broken rule fails the build with a message that names the rule.
 
-Three checks come with the packages, because each is a one-line text search and needs no tool:
+Three checks come with the packages. `scripts/check-imports.sh` reads every import in the app and package sources, in any form (`@testable`, access levels, `import struct`), and needs no extra tool:
 
 - Only `NoteStore` imports GRDB.
 - `NoteUI` never imports `NoteStore`.
@@ -87,7 +87,9 @@ A fourth check keeps the compiler strict, so data races and other unsafe code fa
 
 Xcode does not enforce module boundaries on its own. Modules built together share search paths, so a package can import a module it never declared. That is why the import rules are text checks, not something the package manifests guarantee.
 
-Candidates for later, each added when its code appears: no `Date()` in `NoteCore`, no networking code, an allowlist of dependencies, no values pasted into SQL text, no `print` or `try!`, and a strict import build of `NoteCore` and `NoteStore` with `swift build`.
+swift-format's lint runs in `make check` too. On top of its default rules it bans force unwraps, `try!` and implicitly unwrapped optionals outside tests.
+
+Candidates for later, each added when its code appears: no `Date()` in `NoteCore`, no networking code, an allowlist of dependencies, no values pasted into SQL text, no `print`, and a strict import build of `NoteCore` and `NoteStore` with `swift build`.
 
 ### Performance
 
@@ -107,7 +109,7 @@ Candidates for later, each added when its code appears: no `Date()` in `NoteCore
 - Every change has an obvious place to go: a rule in `NoteCore`, SQL in `NoteStore`, a screen in `NoteUI`.
 - The formatter, search ranking and the database are tested without launching the app.
 - The first feature costs a little more setup: three packages instead of one app target.
-- At the start only the three import rules and the strict compiler settings are checked. The other rules hold by convention and review until a check is added, so early on they can be broken without the build noticing.
+- At the start only the three import rules, the strict compiler settings and the swift-format lint are checked. The other rules hold by convention and review until a check is added, so early on they can be broken without the build noticing.
 - Text checks can be fooled by unusual spellings. They catch honest mistakes, not deliberate evasion.
 - `NoteCore` and `NoteStore` cannot use UIKit or other iOS-only APIs.
 - `NoteUI` cannot build its previews from `NoteStore`. The app target or a preview helper has to supply an in-memory store.

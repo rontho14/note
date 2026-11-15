@@ -6,11 +6,13 @@ import Testing
 @testable import NoteStore
 
 struct DatabaseOpeningTests {
+    let temporaryFolder: TemporaryFolder
     let folder: URL
     let location: URL
 
     init() throws {
-        folder = try URL.newTemporaryFolder()
+        temporaryFolder = try TemporaryFolder()
+        folder = temporaryFolder.url
         location = folder.appending(path: "notes.sqlite")
     }
 
