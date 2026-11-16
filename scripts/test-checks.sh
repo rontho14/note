@@ -189,8 +189,8 @@ expect_settings_fail "NoteCore target lacks strictMemorySafety" "NoteCore's targ
 
 expect_settings_fail "NoteCoreTests target lacks strictMemorySafety" \
     "NoteCore with a test target that has no strict settings" \
-    "$(replaced ios/Packages/NoteCore/Package.swift 'targets: [.target(' \
-        'targets: [.testTarget(name: "NoteCoreTests", dependencies: ["NoteCore"]), .target(')"
+    "$(replaced ios/Packages/NoteCore/Package.swift 'dependencies: ["NoteCore"], swiftSettings: strictSettings' \
+        'dependencies: ["NoteCore"]')"
 
 for setting in \
     SWIFT_VERSION \

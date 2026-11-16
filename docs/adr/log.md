@@ -10,3 +10,4 @@
 - 2026-11-15: Updated [0005](0005-app-structure-and-enforced-boundaries.md). `make check` runs a UI test on the Simulator, `make ios-test-devices` runs it on more devices, and screens follow an accessibility identifier convention.
 - 2026-11-15: Updated [0005](0005-app-structure-and-enforced-boundaries.md). Added `NoteTelemetry` as a fourth package, the only code that imports `os`, with a check for stray `print` calls.
 - 2026-11-15: Updated [0005](0005-app-structure-and-enforced-boundaries.md). `make check-fast` runs every `scripts/check-*.sh`, and `check-rules.sh` fails when a rule a check names drifts from CLAUDE.md.
+- 2026-11-16: Updated [0005](0005-app-structure-and-enforced-boundaries.md). `NoteCore` owns the empty-note rule, `NoteStore` refuses empty notes, emptied drafts are deleted rather than trashed, and the UI test run checks every simulator's database for empty notes.

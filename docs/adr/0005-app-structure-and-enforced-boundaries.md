@@ -89,6 +89,8 @@ This record sets the structure. It does not try to automate all of it up front.
 
 `make check` also launches the app. The UI tests in the `NoteE2ETests` target run on a simulator of the check device, `IOS_CHECK_DEVICE` in the Makefile, with the newest iOS that supports it, so a screen that crashes or loses its identifier fails the build. UI tests use XCTest, because Xcode doesn't make Swift Testing available to UI test bundles. `make ios-test-devices` runs the same tests on more iPhones and on iOS 26, the app's minimum. Both export the screenshots to `build/ui-tests/`. The device run happens on request, not in `make check`. `scripts/run-ui-tests.sh` creates the simulators these runs need, named `Note <device> <iOS version>`, and touches no other simulator. A missing iOS runtime stops the run, because downloading one is the author's call.
 
+After the UI tests, `scripts/run-ui-tests.sh` runs `NoteInvariants`, an executable in the `NoteStore` package, on the database of each simulator it ran on. It opens the file read-only and fails, naming the device, the path and the note's id, when it finds an empty note. A missing app container or database file fails the run too, because the tests just launched the app.
+
 `scripts/check-imports.sh` reads every import in the app, the packages and their tests, and the UI tests, in any form (`@testable`, access levels, `import struct`), and needs no extra tool:
 
 - Only `NoteStore` imports GRDB.
@@ -119,6 +121,8 @@ These came up in review again and again. Each was decided on purpose, so a revie
 - `NoteDatabase.defaultLocation(fileManager:)` returns `<Application Support>/Note/notes.sqlite` and creates the folder. The `FileManager` is a parameter so tests never write into the Mac's real Application Support.
 - Opening the database tries once more after any failure, about 200 ms later. Then the app crashes with only the SQLite result code. This is the author's choice, and the opening step is injected so tests can make it fail.
 - The app target keeps the opened store in a property until the first screen that reads notes takes it.
+- `Note.isEmpty` in `NoteCore` owns what empty means: every character is whitespace. A zero-width space is content. `NoteStore`'s `save` throws `NoteStorageError.emptyNote` rather than store one, and `NoteInvariants` reuses `isEmpty` instead of restating it in SQL.
+- A draft whose text is erased is removed with `NoteStorage.deletePermanently(id:)`, not moved to the trash. The trash holds notes the user deleted, and that flow gets its own method.
 - `save` is one bound SQL upsert that keeps the first `createdAt`. Reads decode through `NoteRecord`, an internal GRDB record. Dates are stored in GRDB's text format, at millisecond precision.
 - Every `Package.swift` writes the strict settings out in full, because manifests can't share code. `check-settings.sh` guards the copies.
 - `NoteTelemetry`'s `Event`, `Field` and `Op` stay typed even with one case each. No case takes a free-form `String`, which is what lets a line be logged as public, and each new case is a one-line diff that review can question. Replacing them with string literals, or adding cases before code logs them, reopens this.

@@ -40,6 +40,32 @@ struct NoteStorageTests {
     @Test func anUnknownIDHasNoNote() async throws {
         #expect(try await storage.note(id: NoteID(rawValue: UUID())) == nil)
     }
+
+    @Test func anEmptyNoteIsRefusedAndTheStoredNoteIsKept() async throws {
+        let id = NoteID(rawValue: UUID())
+        try await storage.save(Note(id: id, text: "kept", createdAt: .milliseconds(1), modifiedAt: .milliseconds(1)))
+
+        await #expect(throws: NoteStorageError.emptyNote) {
+            try await storage.save(Note(id: id, text: " \n", createdAt: .milliseconds(1), modifiedAt: .milliseconds(2)))
+        }
+        let stored = try #require(try await storage.note(id: id))
+
+        #expect(stored.text == "kept")
+        #expect(stored.modifiedAt == .milliseconds(1))
+    }
+
+    @Test func deletingPermanentlyRemovesTheNote() async throws {
+        let id = NoteID(rawValue: UUID())
+        try await storage.save(Note(id: id, text: "gone", createdAt: .milliseconds(1), modifiedAt: .milliseconds(1)))
+
+        try await storage.deletePermanently(id: id)
+
+        #expect(try await storage.note(id: id) == nil)
+    }
+
+    @Test func deletingAnUnknownIDPermanentlySucceeds() async throws {
+        try await storage.deletePermanently(id: NoteID(rawValue: UUID()))
+    }
 }
 
 extension Date {

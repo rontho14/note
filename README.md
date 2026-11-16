@@ -31,7 +31,7 @@ Before calling a change done, run everything: lint, the import and compiler-sett
 make check
 ```
 
-`make ios-test` runs only the UI tests, and writes their screenshots to `build/ui-tests/<device> <iOS version>/`. `ONLY=NoteE2ETests/LaunchTests/testLaunchShowsRootScreen` runs a single one.
+`make ios-test` runs only the UI tests, and writes their screenshots to `build/ui-tests/<device> <iOS version>/`. Afterwards it reads the app's database on each simulator and fails if it holds an empty note. `ONLY=NoteE2ETests/LaunchTests/testLaunchShowsRootScreen` runs a single one.
 
 To see the app on several iPhones, and on iOS 26, the oldest version it supports:
 

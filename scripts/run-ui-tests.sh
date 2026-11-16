@@ -35,6 +35,7 @@ simulator_named() {
 }
 
 udids=()
+names=()
 IFS=',' read -r -a requested <<<"$devices"
 for device in "${requested[@]}"; do
     if [[ "$device" != *@* ]]; then
@@ -65,6 +66,7 @@ for device in "${requested[@]}"; do
         echo "run-ui-tests: created simulator $name"
     fi
     udids+=("$udid")
+    names+=("$type_name $runtime_version")
 done
 
 results="build/ui-tests"
@@ -118,3 +120,15 @@ jq -r --arg prefix "$prefix" '
 done
 rm -rf "$exported"
 echo "run-ui-tests: screenshots in $results"
+
+bundle_id="$(plutil -extract CFBundleIdentifier raw "$derived_data/Build/Products/Debug-iphonesimulator/Note.app/Info.plist")"
+swift build --package-path ios/Packages/NoteStore --product NoteInvariants --quiet
+invariants="$(swift build --package-path ios/Packages/NoteStore --show-bin-path)/NoteInvariants"
+for index in "${!udids[@]}"; do
+    container="$(xcrun simctl get_app_container "${udids[$index]}" "$bundle_id" data)"
+    if ! "$invariants" "$container"; then
+        echo "run-ui-tests: the database on ${names[$index]} breaks an invariant" >&2
+        exit 1
+    fi
+done
+echo "run-ui-tests: no database breaks an invariant"

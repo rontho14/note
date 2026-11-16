@@ -18,12 +18,17 @@ public enum NoteDatabase {
 
     public static func defaultLocation(fileManager: FileManager) throws(NoteDatabaseError) -> URL {
         try reportingFailures {
-            let folder = try fileManager.url(
-                for: .applicationSupportDirectory, in: .userDomainMask, appropriateFor: nil, create: false
-            ).appending(path: "Note", directoryHint: .isDirectory)
-            try fileManager.createDirectory(at: folder, withIntermediateDirectories: true)
-            return folder.appending(path: "notes.sqlite")
+            let location = location(
+                inApplicationSupport: try fileManager.url(
+                    for: .applicationSupportDirectory, in: .userDomainMask, appropriateFor: nil, create: false))
+            try fileManager.createDirectory(
+                at: location.deletingLastPathComponent(), withIntermediateDirectories: true)
+            return location
         }
+    }
+
+    package static func location(inApplicationSupport folder: URL) -> URL {
+        folder.appending(components: "Note", "notes.sqlite")
     }
 
     public static func openInMemory() throws(NoteDatabaseError) -> SQLiteNoteStorage {

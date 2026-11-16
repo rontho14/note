@@ -20,4 +20,8 @@ public struct Note: Sendable {
         self.createdAt = createdAt
         self.modifiedAt = modifiedAt
     }
+
+    public var isEmpty: Bool {
+        text.allSatisfy(\.isWhitespace)
+    }
 }

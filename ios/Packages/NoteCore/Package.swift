@@ -15,5 +15,8 @@ let package = Package(
     name: "NoteCore",
     platforms: [.iOS(.v26), .macOS(.v26)],
     products: [.library(name: "NoteCore", targets: ["NoteCore"])],
-    targets: [.target(name: "NoteCore", swiftSettings: strictSettings)]
+    targets: [
+        .target(name: "NoteCore", swiftSettings: strictSettings),
+        .testTarget(name: "NoteCoreTests", dependencies: ["NoteCore"], swiftSettings: strictSettings),
+    ]
 )

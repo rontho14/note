@@ -9,6 +9,9 @@ public struct SQLiteNoteStorage: NoteStorage {
     }
 
     public func save(_ note: Note) async throws {
+        guard !note.isEmpty else {
+            throw NoteStorageError.emptyNote
+        }
         try await writer.write { db in
             try db.execute(
                 literal: """
@@ -23,6 +26,12 @@ public struct SQLiteNoteStorage: NoteStorage {
     public func note(id: NoteID) async throws -> Note? {
         try await writer.read { db in
             try NoteRecord.fetchOne(db, key: id.rawValue)?.note
+        }
+    }
+
+    public func deletePermanently(id: NoteID) async throws {
+        try await writer.write { db in
+            _ = try NoteRecord.deleteOne(db, key: id.rawValue)
         }
     }
 }

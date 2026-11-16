@@ -35,6 +35,7 @@ A rule that gets broken twice gets a check in `make check`. When a correction re
 | Every rule a check names is stated, word for word, in the CLAUDE.md row that names that check. | `scripts/check-rules.sh` |
 | A check is a `scripts/check-<name>.sh`. `make check-fast` runs every such file, so a new check needs no wiring. | The `CHECKS` glob in the Makefile, tested by `scripts/test-checks.sh` |
 | Text is stored byte for byte. | `NoteStorageTests` |
+| An empty note is never stored. | `NoteStore` refuses one, tested by `NoteStorageTests`, and `NoteInvariants` reads every simulator's database after the UI tests |
 | Every interactive element and each screen's outermost view has an accessibility identifier, a constant in `AccessibilityID` named by the convention in ADR 0005. | Review only |
 | Never edit `ios/Note.xcodeproj`. | It is generated from `ios/project.yml` and gitignored. |
 | Never add a dependency without an ADR. | Review only |
