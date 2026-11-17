@@ -32,7 +32,10 @@ let package = Package(
         ),
         .testTarget(
             name: "NoteStoreTests",
-            dependencies: ["NoteStore", "NoteCore", .product(name: "GRDB", package: "GRDB.swift")],
+            dependencies: [
+                "NoteStore", "NoteCore", .product(name: "NoteCoreTesting", package: "NoteCore"),
+                .product(name: "GRDB", package: "GRDB.swift"),
+            ],
             swiftSettings: strictSettings
         ),
     ]

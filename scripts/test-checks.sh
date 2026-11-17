@@ -196,8 +196,8 @@ expect_settings_fail "NoteCore target lacks strictMemorySafety" "NoteCore's targ
 
 expect_settings_fail "NoteCoreTests target lacks strictMemorySafety" \
     "NoteCore with a test target that has no strict settings" \
-    "$(replaced ios/Packages/NoteCore/Package.swift 'dependencies: ["NoteCore"], swiftSettings: strictSettings' \
-        'dependencies: ["NoteCore"]')"
+    "$(replaced ios/Packages/NoteCore/Package.swift 'dependencies: ["NoteCore", "NoteCoreTesting"], swiftSettings: strictSettings' \
+        'dependencies: ["NoteCore", "NoteCoreTesting"]')"
 
 for setting in \
     SWIFT_VERSION \
@@ -283,6 +283,9 @@ commit_in "$one_line_on_main" --no-verify -am "ship a one-line migration"
 replace_in "$one_line_on_main" "$migrations" '    return migrator' '    migrator.registerMigration("later") { _ in }
     return migrator'
 expect_pass "a migration added after a one-line migration main has" run_check check-migrations.sh "$one_line_on_main"
+
+expect_fail "an iOS-only package's test targets are in the Note scheme" "NoteUITests left out of the Note scheme" \
+    run_check check-test-targets.sh "$(without ios/project.yml "- package: NoteUI/NoteUITests")"
 
 stated="every rule a check names is stated in CLAUDE.md"
 

@@ -56,7 +56,7 @@ The code is split into four local Swift packages and a thin app target.
 | `NoteTelemetry` | The only code that writes logs and signposts. Typed `Event`, `Op` and `Field` values, so note text can't reach a log, and the launch measurement. | `os` |
 | App target | Starts the launch measurement, opens the database and hands it to `NoteUI`. Nothing else. | All four |
 
-Dependencies point one way. `NoteStore` and `NoteUI` depend on `NoteCore`, and neither depends on the other. Only the app target knows both exist. `NoteTelemetry` depends on no package of ours, and a package adds it as a dependency in the change where it first logs.
+Dependencies point one way. `NoteStore` and `NoteUI` depend on `NoteCore`, and neither target depends on the other. Only the app target knows both exist. `NoteUI`'s manifest lists `NoteStore` for `NoteUITests` alone, which runs `WriteModel` against the real in-memory store. The `NoteCore` package also has `NoteCoreTesting`, a library of test builders such as `Note.sample` and fixed dates. It depends only on `NoteCore`, and only test targets import it. `NoteTelemetry` depends on no package of ours, and a package adds it as a dependency in the change where it first logs.
 
 `NoteCore` does no input or output. Code that needs the time or a random value receives it as an argument, so tests control it.
 
@@ -122,7 +122,10 @@ These came up in review again and again. Each was decided on purpose, so a revie
 
 - `NoteDatabase.defaultLocation(fileManager:)` returns `<Application Support>/Note/notes.sqlite` and creates the folder. The `FileManager` is a parameter so tests never write into the Mac's real Application Support.
 - Opening the database tries once more after any failure, about 200 ms later. Then the app crashes with only the SQLite result code. This is the author's choice, and the opening step is injected so tests can make it fail.
-- The app target keeps the opened store in a property until the first screen that reads notes takes it.
+- The app target opens the store and passes it to `WriteScreen`, which gives it to `WriteModel`.
+- The write screen saves the draft `WriteScreen.saveDelay` after the last keystroke, through SwiftUI's `task(id:)` on the text, and at once when the scene goes to the background, without asking iOS for extra time. `WriteModel` runs its saves one after another, so the two triggers never store the draft twice. `DraftChange` in `NoteCore` decides what each save does: it creates the draft's id on the first save of text that isn't empty, deletes the draft when its text is erased, so the next typing starts a new note, and moves `modifiedAt` only when the text changes. `WriteModel` carries the decision out against the store. `DraftChange` handles a first save, with no draft yet, in its own branch rather than starting from a blank placeholder note, so creating a note never depends on a placeholder's text.
+- Returning to the app is its own step, `WriteModel.returnToForeground(now:)`: it keeps the draft on screen when `DraftReopening.reopens(modifiedAt:now:)` says it is inside the window, and otherwise clears the screen. It does not reload the draft from the store, because the draft on screen is the one just saved.
+- A save or load that fails stops the app, as a database that won't open does. `WriteModel` throws, and `WriteScreen` decides to stop, through its one `stoppingTheAppOnFailure` helper, so the model stays testable on a failing store. There is no error screen yet, and hiding the failure would hide a lost draft. The crash loses the typing since the last successful save.
 - `Note.isEmpty` in `NoteCore` owns what empty means: every character is whitespace. A zero-width space is content. `NoteStore`'s `save` throws `NoteStorageError.emptyNote` rather than store one, and `NoteInvariants` reuses `isEmpty` instead of restating it in SQL.
 - A draft whose text is erased is removed with `NoteStorage.deletePermanently(id:)`, not moved to the trash. The trash holds notes the user deleted, and that flow gets its own method.
 - `Note.cursor` is the caret as a UTF-8 offset into the text. The text is stored byte for byte, so the offset points at the same place on reopen. `Note.cursorIndex` turns it back into a position, moving an offset inside a character back to that character's start and clamping one outside the text. `cursor` and `text` are plain variables that can change apart, and `cursorIndex` is the one reading of the caret, so it accepts any offset. Making `cursor` read-only, or changing text and caret only through one edit method, was weighed and declined by the author: the first guards nothing while the initializer takes any offset, and the second costs every keystroke a call for a rule `cursorIndex` already keeps.
@@ -138,7 +141,7 @@ These came up in review again and again. Each was decided on purpose, so a revie
 
 ### Performance
 
-- `NoteCore` and `NoteStore` contain no iOS-only code, so they build and test on the Mac with `swift test`, with no simulator. Formatter and search tests run there against large sets of notes.
+- `NoteCore` and `NoteStore` contain no iOS-only code, so they build and test on the Mac with `swift test`, with no simulator. Formatter and search tests run there against large sets of notes. `NoteUI` is iOS-only, so `scripts/test-packages.sh` runs only the packages that build for macOS, and `NoteUITests` run in the Simulator as a test target of the Note scheme, with the UI tests. `scripts/check-test-targets.sh` fails when an iOS-only package has a test target the scheme doesn't list, so no test runs nowhere.
 - `NoteStore` opens SQLite in WAL mode through a `DatabasePool`, so reads do not wait for writes. Views cannot reach GRDB and the store's interface is `async`, so no query runs on the main thread.
 - Launch to keyboard and search time have budgets checked by tests, as the vision requires.
 
@@ -157,4 +160,4 @@ These came up in review again and again. Each was decided on purpose, so a revie
 - At the start only the three import rules, the strict compiler settings and the swift-format lint were checked. The other rules hold by convention and review until a check is added, so early on they can be broken without the build noticing.
 - Text checks can be fooled by unusual spellings. They catch honest mistakes, not deliberate evasion.
 - `NoteCore` and `NoteStore` cannot use UIKit or other iOS-only APIs.
-- `NoteUI` cannot build its previews from `NoteStore`. The app target or a preview helper has to supply an in-memory store.
+- `NoteUI` cannot build its previews from `NoteStore`. The app target or a preview helper has to supply an in-memory store. The write screen has no preview for now: it needs a store, and a store written only for previews would be a second `NoteStorage` to keep correct. Its UI test screenshots show it instead.

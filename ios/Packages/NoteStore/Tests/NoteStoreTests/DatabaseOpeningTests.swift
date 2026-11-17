@@ -1,6 +1,7 @@
 import Foundation
 import GRDB
 import NoteCore
+import NoteCoreTesting
 import Testing
 
 @testable import NoteStore

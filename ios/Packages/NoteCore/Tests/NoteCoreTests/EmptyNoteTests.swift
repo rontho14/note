@@ -1,5 +1,6 @@
 import Foundation
 import NoteCore
+import NoteCoreTesting
 import Testing
 
 struct EmptyNoteTests {

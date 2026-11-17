@@ -14,9 +14,14 @@ let strictSettings: [SwiftSetting] = [
 let package = Package(
     name: "NoteCore",
     platforms: [.iOS(.v26), .macOS(.v26)],
-    products: [.library(name: "NoteCore", targets: ["NoteCore"])],
+    products: [
+        .library(name: "NoteCore", targets: ["NoteCore"]),
+        .library(name: "NoteCoreTesting", targets: ["NoteCoreTesting"]),
+    ],
     targets: [
         .target(name: "NoteCore", swiftSettings: strictSettings),
-        .testTarget(name: "NoteCoreTests", dependencies: ["NoteCore"], swiftSettings: strictSettings),
+        .target(name: "NoteCoreTesting", dependencies: ["NoteCore"], swiftSettings: strictSettings),
+        .testTarget(
+            name: "NoteCoreTests", dependencies: ["NoteCore", "NoteCoreTesting"], swiftSettings: strictSettings),
     ]
 )

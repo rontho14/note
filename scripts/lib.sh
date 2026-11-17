@@ -23,3 +23,20 @@ set_swift_test_folders() {
         fi
     done
 }
+
+# Sorts every package that has tests by where they run. macos_packages test on the Mac through test-packages.sh.
+# ios_only_packages test in the Simulator as test targets of the Note scheme, which check-test-targets.sh makes sure of.
+set_tested_packages() {
+    local tests package manifest
+    macos_packages=()
+    ios_only_packages=()
+    for tests in ios/Packages/*/Tests; do
+        package="$(dirname "$tests")"
+        manifest="$(swift package --package-path "$package" dump-package)"
+        if jq -e '.platforms | any(.platformName == "macos")' <<<"$manifest" >/dev/null; then
+            macos_packages+=("$package")
+        else
+            ios_only_packages+=("$package")
+        fi
+    done
+}

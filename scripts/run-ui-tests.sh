@@ -105,11 +105,15 @@ jq -r --arg prefix "$prefix" '
     | [.exportedFileName, (.deviceName | ltrimstr($prefix)), $test, .suggestedHumanReadableName]
     | @tsv
 ' "$exported/manifest.json" | while IFS=$'\t' read -r file device test suggested; do
-    if [[ ! "$suggested" =~ ^(.+)_[0-9]+_[0-9A-F-]{36}\.png$ ]]; then
-        echo "run-ui-tests: can't read the screenshot name from $suggested. Xcode used to suggest <name>_<index>_<UUID>.png." >&2
+    # Xcode treats the part of a name after its last dot as an extension: write.reopened becomes write_0_<UUID>.reopened.
+    if [[ ! "$suggested" =~ ^(.+)_[0-9]+_[0-9A-F-]{36}\.(.+)$ ]]; then
+        echo "run-ui-tests: can't read the screenshot name from $suggested. Xcode used to suggest <name>_<index>_<UUID>.png, or <name>_<index>_<UUID>.<state> for <name>.<state>." >&2
         exit 1
     fi
     name="${BASH_REMATCH[1]}"
+    if [[ "${BASH_REMATCH[2]}" != png ]]; then
+        name="$name.${BASH_REMATCH[2]}"
+    fi
     target="$results/$device/$test-$name.png"
     if [[ -e "$target" ]]; then
         echo "run-ui-tests: $test attached two screenshots named $name on $device. Add .<state> to one name." >&2

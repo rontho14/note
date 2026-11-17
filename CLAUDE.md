@@ -31,6 +31,7 @@ A rule that gets broken twice gets a check in `make check`. When a correction re
 | Code is formatted. No force unwraps, `try!` or implicitly unwrapped optionals outside tests. | swift-format lint, configured in `.swift-format` |
 | Errors are never swallowed: no `2>/dev/null` or `\|\| true` in scripts, no `try?` in app or package sources. | `scripts/check-errors.sh` |
 | Only the Makefile runs xcodegen: scripts generate the Xcode project with `make ios-project`. Info.plist keys live in the target's `info:` properties in `ios/project.yml`. `LaunchBackground` in the asset catalog is the same color as `Palette.paper`. | `scripts/check-owners.sh` |
+| An iOS-only package's test targets are in the Note scheme. | `scripts/check-test-targets.sh` |
 | Every check fails on a planted violation and names its rule. | `scripts/test-checks.sh` |
 | Every rule a check names is stated, word for word, in the CLAUDE.md row that names that check. | `scripts/check-rules.sh` |
 | A check is a `scripts/check-<name>.sh`. `make check-fast` runs every such file, so a new check needs no wiring. | The `CHECKS` glob in the Makefile, tested by `scripts/test-checks.sh` |

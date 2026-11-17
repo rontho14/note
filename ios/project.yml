@@ -36,7 +36,9 @@ targets:
       - package: NoteTelemetry
       - package: NoteUI
     scheme:
-      testTargets: [NoteE2ETests]
+      testTargets:
+        - NoteE2ETests
+        - package: NoteUI/NoteUITests
     info:
       path: Note/Info.plist
       properties:

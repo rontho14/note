@@ -55,9 +55,10 @@ check-fast: lint $(CHECKS)
 test-checks:
 	scripts/test-checks.sh
 
-# Every package's tests, on the Mac with no simulator.
+# The tests of every package that builds for macOS, on the Mac with no simulator. An iOS-only package's tests run in
+# the Simulator through ios-test, and check-test-targets.sh makes sure the Note scheme lists them.
 test-packages:
-	for tests in $(IOS_DIR)/Packages/*/Tests; do swift test --package-path "$$(dirname "$$tests")" || exit 1; done
+	scripts/test-packages.sh
 
 # Everything that must pass before a change is done, fastest first.
 check: check-fast test-checks test-packages ios-test
