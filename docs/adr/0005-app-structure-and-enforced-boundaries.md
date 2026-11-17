@@ -69,7 +69,7 @@ Each screen is a SwiftUI view and one `@Observable` model, in files named after 
 Every interactive element, and each screen's outermost view, has an accessibility identifier, so UI tests find elements without depending on their text:
 
 - An identifier is lowercase words joined by dots, `<screen>.<element>`, where `<screen>` is the screen's file name without `Screen`: `write.text`, `notes.list`.
-- A screen's outermost view is identified by `<screen>` alone, such as `root` or `write`.
+- A screen's outermost view is identified by `<screen>` alone, such as `write`.
 - A repeated element appends the note or drawer ID: `notes.row.<uuid>`.
 - Every identifier is a constant in `AccessibilityID` in `NoteUI`. The UI tests read the same constant, so one file owns each string.
 
@@ -77,7 +77,7 @@ UI tests attach a screenshot at each state worth seeing, named after the identif
 
 Lists observe the database and refresh themselves when it changes, as in GRDB's demo app, instead of reloading after every save.
 
-SwiftUI is the default. A screen moves to UIKit only when a measurement shows SwiftUI is too slow or cannot do the job. The write screen is the likely case, because it must restore the cursor and handle long notes. NetNewsWire follows the same rule.
+SwiftUI is the default. A screen moves to UIKit only when a measurement shows SwiftUI is too slow or cannot do the job. NetNewsWire follows the same rule. The write screen was the likely case, because it must restore the cursor and keep text byte for byte. On iOS 27, `TextEditor(text:selection:)` does both: an edit leaves CRLF, combining marks and emoji as they were, and the caret can be set and read through its `TextSelection`. So the write screen stays on SwiftUI until long notes measure too slow.
 
 ### Checks
 
@@ -110,7 +110,7 @@ swift-format's lint runs in `make check` too. On top of its default rules it ban
 
 `scripts/check-rules.sh` keeps CLAUDE.md's rules table in step with the checks: every rule name a check prints must appear, word for word, in the row that names that check. `make check-fast` runs every `scripts/check-*.sh`, so a new check needs no wiring.
 
-`scripts/check-owners.sh` keeps one owner for facts that were once kept in two places: only the Makefile runs xcodegen (scripts call `make ios-project`), and Info.plist keys live only in each target's XcodeGen `info:` properties, never in `INFOPLIST_KEY_*` or `GENERATE_INFOPLIST_FILE` settings.
+`scripts/check-owners.sh` keeps one owner for facts that were once kept in two places: only the Makefile runs xcodegen (scripts call `make ios-project`), and Info.plist keys live only in each target's XcodeGen `info:` properties, never in `INFOPLIST_KEY_*` or `GENERATE_INFOPLIST_FILE` settings. The paper color lives in `Palette.paper` and again in the asset catalog's `LaunchBackground`, because the launch screen can't run code, so the check fails when the two differ.
 
 `scripts/check-migrations.sh` keeps a shipped migration as it shipped. For each `registerMigration` in `Migrations.swift`, it finds the first commit on `main` that registers that name and fails, naming the migration, when the block differs from that commit's. A migration `main` doesn't have yet may still change. `MigrationTests` covers the other half: it leaves a database at an earlier version, opens it with the current migrator and reads the note back byte for byte. That test runs today's code for the old migration, so it can't notice the old migration being edited, which is why the check exists.
 
@@ -131,6 +131,8 @@ These came up in review again and again. Each was decided on purpose, so a revie
 - `NoteTelemetry`'s `Event`, `Field` and `Op` stay typed even with one case each. No case takes a free-form `String`, which is what lets a line be logged as public, and each new case is a one-line diff that review can question. Replacing them with string literals, or adding cases before code logs them, reopens this.
 - Logs and signposts use the subsystem `com.rontho14.note`, a fixed name that log filters and scripts match. It reads like the bundle ID but is not derived from it, so renaming the bundle ID leaves it as it is.
 - `LaunchMeasurement` runs on the main actor, where the app begins and records it, so it needs no lock.
+- The launch ends at the first `UIResponder.keyboardDidShowNotification` on the write screen, because the vision's budget is launch to keyboard. iOS posts it more than once, and `LaunchMeasurement` records only the first. `WriteScreen` observes the notification and calls the `onKeyboardUp` closure it is given, and the app passes `launch.recordLaunched()`. The screen knows when its own keyboard is up, and the app target stays a few lines of wiring with no observers of its own.
+- `WriteScreen` places the text with outer padding that subtracts `TextEditor`'s own insets, `editorSideInset` and `editorTopInset` in its `Layout`, measured from the `write` screenshot, so the text sits where DESIGN.md says.
 - `LaunchMeasurement.recordLaunched()` returns the launch duration, or nil on every call after the first. The app ignores it. Tests read it to prove the launch is logged once, without reading the unified log.
 - `scripts/test-checks.sh` lists each required setting by hand instead of reading the list in `check-settings.sh`. A test that takes its expected values from the code it tests can't notice that code dropping one.
 

@@ -31,7 +31,7 @@ Before calling a change done, run everything: lint, the import and compiler-sett
 make check
 ```
 
-`make ios-test` runs only the UI tests, and writes their screenshots to `build/ui-tests/<device> <iOS version>/`. Afterwards it reads the app's database on each simulator and fails if it holds an empty note. `ONLY=NoteE2ETests/LaunchTests/testLaunchShowsRootScreen` runs a single one.
+`make ios-test` runs only the UI tests, and writes their screenshots to `build/ui-tests/<device> <iOS version>/`. Afterwards it reads the app's database on each simulator and fails if it holds an empty note. `ONLY=NoteE2ETests/LaunchTests/testLaunchOpensABlankNoteWithTheKeyboardUp` runs a single one.
 
 To see the app on several iPhones, and on iOS 26, the oldest version it supports:
 
@@ -44,3 +44,7 @@ It runs the UI tests on every device in `IOS_TEST_DEVICES` in the [Makefile](Mak
 `make fmt` fixes formatting that `make check` rejects.
 
 The Xcode project is generated from [ios/project.yml](ios/project.yml) and is not checked in. Change the spec, never the `.xcodeproj`. `make ios-project` regenerates it if you want to open it in Xcode; `make clean` removes it and the build output.
+
+## Fonts
+
+The bundled fonts and their license files are in `NoteUI`'s `Fonts` folder. [DESIGN.md](docs/DESIGN.md#fonts-and-licenses) names each face, its license and its copyright line.

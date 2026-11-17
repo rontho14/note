@@ -18,8 +18,7 @@ struct NoteApp: App {
 
     var body: some Scene {
         WindowGroup {
-            RootScreen()
-                .onAppear { launch.recordLaunched() }
+            WriteScreen(onKeyboardUp: { launch.recordLaunched() })
         }
     }
 }

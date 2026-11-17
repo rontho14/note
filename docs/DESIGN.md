@@ -7,8 +7,8 @@ The direction is called Empire. It was chosen on 2026-11-11 out of four explored
 ## Rules
 
 - **Italic is raw text. Roman is finished text.** The write screen is italic. View mode sets the same text in roman. In lists, an untitled note shows its first words in italic and a titled note shows its title in roman.
-- **There is no sans-serif.** Every word is Newsreader or Bodoni Moda.
-- **Bodoni Moda is for names.** It sets view headings, drawer names, the title field and sheet headings. Everything else is Newsreader.
+- **There is no sans-serif.** Every word is Source Serif 4 or Bodoni Moda.
+- **Bodoni Moda is for names.** It sets view headings, drawer names, the title field and sheet headings. Everything else is Source Serif 4.
 - **Ink is olive-black.** No neutral grey appears anywhere.
 - **A theme has one accent.** It marks the caret, the active footer tab, drawer numerals, the draft ring, the selected chip, add buttons, the Restore word, checkboxes, switches, slider fills, checkmarks and the save button. Nothing else is colored.
 - **Quiet things use the second color.** That covers dates, previews, labels, counts and inactive icons.
@@ -59,40 +59,40 @@ Every second color and every `accentText` has a contrast of at least 4.5 to 1 ag
 
 ## Type
 
-Old-style figures are on everywhere.
+Old-style figures are on everywhere. Source Serif 4 replaced Newsreader as the text face because Newsreader has no old-style figures.
 
 | Role | Face | Size / line | Notes |
 |---|---|---|---|
-| Write | Newsreader italic 400 | 17.5 / 28 | |
-| View text | Newsreader 400 | 17.5 / 28 | |
+| Write | Source Serif 4 italic 400 | 17.5 / 28 | |
+| View text | Source Serif 4 400 | 17.5 / 28 | |
 | View heading | Bodoni Moda 500 | 30 / 34 | Tracking -1% |
-| View label | Newsreader italic 400 | 16.5 / 26 | Second color. A line that ends in a colon |
-| Note title in a list | Newsreader 500 | 17 / 24 | |
-| Note preview in a list | Newsreader italic 400 | 17 / 24 | Second color, one line, cut with an ellipsis |
-| Drawer label | Newsreader 600 | 10.5 / 15 | Uppercase, tracking 10%, second color |
-| Date | Newsreader 400 | 13 / 24 | Second color |
+| View label | Source Serif 4 italic 400 | 16.5 / 26 | Second color. A line that ends in a colon |
+| Note title in a list | Source Serif 4 500 | 17 / 24 | |
+| Note preview in a list | Source Serif 4 italic 400 | 17 / 24 | Second color, one line, cut with an ellipsis |
+| Drawer label | Source Serif 4 600 | 10.5 / 15 | Uppercase, tracking 10%, second color |
+| Date | Source Serif 4 400 | 13 / 24 | Second color |
 | Drawer name | Bodoni Moda 500 | 28 / 40 | Tracking -1% |
 | Unsorted | Bodoni Moda italic 400 | 28 / 40 | Second color |
-| Drawer numeral | Newsreader italic 400 | 14 | `accentText`. Lowercase roman with a period |
-| Count | Newsreader 400 | 14 | Second color |
-| Note inside an open drawer | Newsreader 500, or italic 400 | 16 / 36 | Same italic rule as the notes list |
-| Title field | Bodoni Moda 500 | 26 | Placeholder is Newsreader italic in the second color |
-| Chip | Newsreader 400 | 16 | |
-| Save button | Newsreader 500 | 17.5 | |
+| Drawer numeral | Source Serif 4 italic 400 | 14 | `accentText`. Lowercase roman with a period |
+| Count | Source Serif 4 400 | 14 | Second color |
+| Note inside an open drawer | Source Serif 4 500, or italic 400 | 16 / 36 | Same italic rule as the notes list |
+| Title field | Bodoni Moda 500 | 26 | Placeholder is Source Serif 4 italic in the second color |
+| Chip | Source Serif 4 400 | 16 | |
+| Save button | Source Serif 4 500 | 17.5 | |
 | Sheet heading | Bodoni Moda italic 500 | 26 / 34 | |
-| Search field | Newsreader 400 | 18 / 24 | |
-| Settings row | Newsreader 400 | 17.5 | |
-| Settings value | Newsreader italic 400 | 16 | Second color |
-| Settings group label | Newsreader 600 | 12 / 28 | Uppercase, tracking 10%, second color |
-| Message pill and bubble | Newsreader italic 400 | 15 to 16 | Surface color on ink |
+| Search field | Source Serif 4 400 | 18 / 24 | |
+| Settings row | Source Serif 4 400 | 17.5 | |
+| Settings value | Source Serif 4 italic 400 | 16 | Second color |
+| Settings group label | Source Serif 4 600 | 12 / 28 | Uppercase, tracking 10%, second color |
+| Message pill and bubble | Source Serif 4 italic 400 | 15 to 16 | Surface color on ink |
 
 Text size follows the iPhone by default, and a setting can replace it with a size the user picks. These sizes are for the default size. How each one scales is undecided.
 
 ### Fonts and licenses
 
-Newsreader and Bodoni Moda are both under the SIL Open Font License 1.1. I read each license file in the Google Fonts repository on 2026-11-11. The license allows bundling the fonts in an app that is sold. It forbids selling the fonts by themselves. The app must ship each font's copyright notice and the license text, for example on an acknowledgements screen. Neither copyright line declares a reserved font name.
+Source Serif 4 and Bodoni Moda are both under the SIL Open Font License 1.1. I read Bodoni Moda's license file in the Google Fonts repository on 2026-11-11 and Source Serif 4's on 2026-11-16. The license allows bundling the fonts in an app that is sold. It forbids selling the fonts by themselves. The app must ship each font's copyright notice and the license text, for example on an acknowledgements screen. Neither copyright line declares a reserved font name.
 
-- Newsreader: Copyright 2020 The Newsreader Project Authors
+- Source Serif 4: Copyright 2014 The Source Serif 4 Project Authors
 - Bodoni Moda: Copyright 2020 The Bodoni Moda Project Authors
 
 ## Shape and spacing

@@ -12,3 +12,4 @@
 - 2026-11-15: Updated [0005](0005-app-structure-and-enforced-boundaries.md). `make check-fast` runs every `scripts/check-*.sh`, and `check-rules.sh` fails when a rule a check names drifts from CLAUDE.md.
 - 2026-11-16: Updated [0005](0005-app-structure-and-enforced-boundaries.md). `NoteCore` owns the empty-note rule, `NoteStore` refuses empty notes, emptied drafts are deleted rather than trashed, and the UI test run checks every simulator's database for empty notes.
 - 2026-11-16: Updated [0005](0005-app-structure-and-enforced-boundaries.md). `check-migrations.sh` fails when a migration already on `main` is edited, `MigrationTests` upgrades a database from an earlier version, and the caret is stored as a UTF-8 offset.
+- 2026-11-16: Updated [0005](0005-app-structure-and-enforced-boundaries.md). The launch ends at keyboard-up on the write screen, which stays on SwiftUI's `TextEditor`, and `check-owners.sh` keeps the launch screen's paper equal to `Palette.paper`.

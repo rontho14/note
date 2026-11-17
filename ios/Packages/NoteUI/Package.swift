@@ -20,6 +20,7 @@ let package = Package(
         .target(
             name: "NoteUI",
             dependencies: ["NoteCore"],
+            resources: [.copy("Fonts")],
             swiftSettings: strictSettings + [.defaultIsolation(MainActor.self)]
         )
     ]

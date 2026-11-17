@@ -241,6 +241,8 @@ expect_fail "expired on 2020-01-01" "an exception that has expired" \
 expect_fail "only the Makefile runs xcodegen" "a script that runs xcodegen itself" \
     run_check check-owners.sh "$(replaced scripts/check-settings.sh 'make -s -C "$root" ios-project' \
         '(cd ios && xcodegen gen''erate --quiet)')"
+expect_fail "LaunchBackground in the asset catalog is the same color as Palette.paper" "a launch screen whose paper differs" \
+    run_check check-owners.sh "$(replaced ios/Note/Assets.xcassets/LaunchBackground.colorset/Contents.json '"0xEC"' '"0xED"')"
 expect_fail "Info.plist keys live in the target's info: properties in ios/project.yml" "project.yml generating Info.plist keys" \
     run_check check-owners.sh "$(replaced ios/project.yml '        TARGETED_DEVICE_FAMILY: "1"' \
         '        TARGETED_DEVICE_FAMILY: "1"
