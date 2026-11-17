@@ -125,8 +125,19 @@ bundle_id="$(plutil -extract CFBundleIdentifier raw "$derived_data/Build/Product
 swift build --package-path ios/Packages/NoteStore --product NoteInvariants --quiet
 invariants="$(swift build --package-path ios/Packages/NoteStore --show-bin-path)/NoteInvariants"
 for index in "${!udids[@]}"; do
-    container="$(xcrun simctl get_app_container "${udids[$index]}" "$bundle_id" data)"
-    if ! "$invariants" "$container"; then
+    udid="${udids[$index]}"
+    # xcodebuild shuts down a simulator it booted, and simctl finds an app's container only on a booted one.
+    state="$(xcrun simctl list devices -j | jq -r --arg udid "$udid" '.devices[][] | select(.udid == $udid) | .state')"
+    if [[ "$state" != Booted ]]; then
+        xcrun simctl bootstatus "$udid" -b >/dev/null
+    fi
+    container="$(xcrun simctl get_app_container "$udid" "$bundle_id" data)"
+    status=0
+    "$invariants" "$container" || status=$?
+    if [[ "$state" != Booted ]]; then
+        xcrun simctl shutdown "$udid"
+    fi
+    if [[ "$status" != 0 ]]; then
         echo "run-ui-tests: the database on ${names[$index]} breaks an invariant" >&2
         exit 1
     fi
