@@ -68,11 +68,16 @@ without() {
     echo "$case_root"
 }
 
+replace_in() {
+    local content replacement="$4"
+    content="$(<"$1/$2")"
+    printf '%s\n' "${content//"$3"/$replacement}" >"$1/$2"
+}
+
 replaced() {
-    local case_root content replacement="$3"
+    local case_root
     case_root="$(fresh_case)"
-    content="$(<"$repo/$1")"
-    printf '%s\n' "${content//"$2"/$replacement}" >"$case_root/$1"
+    replace_in "$case_root" "$1" "$2" "$3"
     echo "$case_root"
 }
 
@@ -84,12 +89,14 @@ commit_in() {
     git -C "$1" -c user.name=test-checks -c user.email=test-checks@example.invalid commit -q "${@:2}"
 }
 
+# Every case copies this repository, whose main branch holds the clean tree, so a check can read history.
+git -C "$scratch/repo" init -q -b main
+git -C "$scratch/repo" add -A
+commit_in "$scratch/repo" --no-verify -m baseline
+
 hooked_case_with() {
     local case_root
     case_root="$(fresh_case)"
-    git -C "$case_root" init -q
-    git -C "$case_root" add -A
-    commit_in "$case_root" --no-verify -m baseline
     make -C "$case_root" setup >/dev/null
     plant "$case_root" "$1" "$2"
     git -C "$case_root" add -A
@@ -256,6 +263,24 @@ for script in "$repo"/scripts/check-*.sh; do
         run_check "$script" "$(mktemp -d "$scratch/empty.XXXXXX")"
     expect_pass "$script on the clean tree" run_check "$script" "$(fresh_case)"
 done
+
+shipped="never edit a migration that has shipped"
+migrations=ios/Packages/NoteStore/Sources/NoteStore/Migrations.swift
+v1_without_not_null="$(replaced "$migrations" 'table.column("text", .text).notNull()' 'table.column("text", .text)')"
+
+expect_fail "$shipped" "an edit to v1, which main has" run_check check-migrations.sh "$v1_without_not_null"
+expect_fail "v1 differs from" "an edit to v1 that doesn't name v1" run_check check-migrations.sh "$v1_without_not_null"
+expect_pass "a migration main doesn't have yet" \
+    run_check check-migrations.sh "$(replaced "$migrations" '    return migrator' \
+        '    migrator.registerMigration("planted") { _ in }
+    return migrator')"
+
+one_line_on_main="$(replaced "$migrations" '    return migrator' '    migrator.registerMigration("one-line") { _ in }
+    return migrator')"
+commit_in "$one_line_on_main" --no-verify -am "ship a one-line migration"
+replace_in "$one_line_on_main" "$migrations" '    return migrator' '    migrator.registerMigration("later") { _ in }
+    return migrator'
+expect_pass "a migration added after a one-line migration main has" run_check check-migrations.sh "$one_line_on_main"
 
 stated="every rule a check names is stated in CLAUDE.md"
 

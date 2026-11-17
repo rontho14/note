@@ -39,7 +39,7 @@ A rule that gets broken twice gets a check in `make check`. When a correction re
 | Every interactive element and each screen's outermost view has an accessibility identifier, a constant in `AccessibilityID` named by the convention in ADR 0005. | Review only |
 | Never edit `ios/Note.xcodeproj`. | It is generated from `ios/project.yml` and gitignored. |
 | Never add a dependency without an ADR. | Review only |
-| Never edit a migration that has shipped. | Review only, until the upgrade test arrives with the second migration |
+| Never edit a migration that has shipped. | `scripts/check-migrations.sh`, and `MigrationTests` upgrades a database from an earlier version |
 | A change to behavior a doc describes updates that doc in the same commit. A doc names where a value lives, such as a Makefile variable, a script or a type, and never copies the value: no counts, device names or lists. | Review only: a judgment call |
 | New `scripts/test-checks.sh` cases go through `expect_fail`, `expect_pass` and the existing fixture helpers. | Review only |
 | A name says its main side effect. A parameter that only tests use needs a recorded reason. | Review only: a judgment call |

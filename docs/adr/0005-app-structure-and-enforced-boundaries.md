@@ -112,6 +112,8 @@ swift-format's lint runs in `make check` too. On top of its default rules it ban
 
 `scripts/check-owners.sh` keeps one owner for facts that were once kept in two places: only the Makefile runs xcodegen (scripts call `make ios-project`), and Info.plist keys live only in each target's XcodeGen `info:` properties, never in `INFOPLIST_KEY_*` or `GENERATE_INFOPLIST_FILE` settings.
 
+`scripts/check-migrations.sh` keeps a shipped migration as it shipped. For each `registerMigration` in `Migrations.swift`, it finds the first commit on `main` that registers that name and fails, naming the migration, when the block differs from that commit's. A migration `main` doesn't have yet may still change. `MigrationTests` covers the other half: it leaves a database at an earlier version, opens it with the current migrator and reads the note back byte for byte. That test runs today's code for the old migration, so it can't notice the old migration being edited, which is why the check exists.
+
 Candidates for later, each added when its code appears: no `Date()` in `NoteCore`, no networking code, an allowlist of dependencies, no values pasted into SQL text, and a strict import build of `NoteCore` and `NoteStore` with `swift build`.
 
 ### Settled details
@@ -123,6 +125,7 @@ These came up in review again and again. Each was decided on purpose, so a revie
 - The app target keeps the opened store in a property until the first screen that reads notes takes it.
 - `Note.isEmpty` in `NoteCore` owns what empty means: every character is whitespace. A zero-width space is content. `NoteStore`'s `save` throws `NoteStorageError.emptyNote` rather than store one, and `NoteInvariants` reuses `isEmpty` instead of restating it in SQL.
 - A draft whose text is erased is removed with `NoteStorage.deletePermanently(id:)`, not moved to the trash. The trash holds notes the user deleted, and that flow gets its own method.
+- `Note.cursor` is the caret as a UTF-8 offset into the text. The text is stored byte for byte, so the offset points at the same place on reopen. `Note.cursorIndex` turns it back into a position, moving an offset inside a character back to that character's start and clamping one outside the text. `cursor` and `text` are plain variables that can change apart, and `cursorIndex` is the one reading of the caret, so it accepts any offset. Making `cursor` read-only, or changing text and caret only through one edit method, was weighed and declined by the author: the first guards nothing while the initializer takes any offset, and the second costs every keystroke a call for a rule `cursorIndex` already keeps.
 - `save` is one bound SQL upsert that keeps the first `createdAt`. Reads decode through `NoteRecord`, an internal GRDB record. Dates are stored in GRDB's text format, at millisecond precision.
 - Every `Package.swift` writes the strict settings out in full, because manifests can't share code. `check-settings.sh` guards the copies.
 - `NoteTelemetry`'s `Event`, `Field` and `Op` stay typed even with one case each. No case takes a free-form `String`, which is what lets a line be logged as public, and each new case is a one-line diff that review can question. Replacing them with string literals, or adding cases before code logs them, reopens this.

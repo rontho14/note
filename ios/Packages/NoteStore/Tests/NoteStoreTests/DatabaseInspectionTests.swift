@@ -12,7 +12,7 @@ struct DatabaseInspectionTests {
         folder = try TemporaryFolder()
         location = folder.url.appending(path: "notes.sqlite")
         try await NoteDatabase.openOnDisk(at: location).save(
-            Note(id: NoteID(rawValue: UUID()), text: "kept", createdAt: .milliseconds(1), modifiedAt: .milliseconds(1)))
+            Note.sample("kept"))
     }
 
     @Test func emptyNotesWrittenPastTheStoreAreFound() async throws {

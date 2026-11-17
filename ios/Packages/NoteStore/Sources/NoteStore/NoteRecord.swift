@@ -7,10 +7,11 @@ struct NoteRecord: Decodable, FetchableRecord, TableRecord {
 
     let id: UUID
     let text: String
+    let cursor: Int
     let createdAt: Date
     let modifiedAt: Date
 
     var note: Note {
-        Note(id: NoteID(rawValue: id), text: text, createdAt: createdAt, modifiedAt: modifiedAt)
+        Note(id: NoteID(rawValue: id), text: text, cursor: cursor, createdAt: createdAt, modifiedAt: modifiedAt)
     }
 }

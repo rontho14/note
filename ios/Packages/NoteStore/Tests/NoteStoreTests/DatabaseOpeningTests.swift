@@ -65,7 +65,7 @@ struct DatabaseOpeningTests {
         let copy = try DatabaseQueue(path: folder.appending(path: "notes.before-extra.sqlite").path)
         let copiedMigrations = try await copy.read(migrator.appliedIdentifiers)
         let copiedNote = try await SQLiteNoteStorage(writer: copy).note(id: note.id)
-        #expect(copiedMigrations == ["v1"])
+        #expect(copiedMigrations == Set(migrator.migrations))
         #expect(copiedNote?.text == "kept")
     }
 
@@ -77,8 +77,7 @@ struct DatabaseOpeningTests {
     }
 
     private func savedNote() async throws -> Note {
-        let note = Note(
-            id: NoteID(rawValue: UUID()), text: "kept", createdAt: .milliseconds(1), modifiedAt: .milliseconds(1))
+        let note = Note.sample("kept")
         try await NoteDatabase.openOnDisk(at: location).save(note)
         return note
     }

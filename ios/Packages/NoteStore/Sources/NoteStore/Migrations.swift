@@ -10,5 +10,11 @@ let migrator: DatabaseMigrator = {
             table.column("modifiedAt", .text).notNull()
         }
     }
+    migrator.registerMigration("v2") { db in
+        try db.alter(table: "note") { table in
+            table.add(column: "cursor", .integer).notNull().defaults(to: 0)
+        }
+        try db.create(indexOn: "note", columns: ["modifiedAt"])
+    }
     return migrator
 }()

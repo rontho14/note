@@ -14,25 +14,27 @@ struct NoteStorageTests {
         let text =
             "Emoji 👩🏽‍💻🇧🇷, composed é and combining e\u{301}\r\nCRLF\rlone CR\ntrailing spaces   \ttab\t\n"
             + "NUL\u{0}inside" + String(repeating: "x", count: 100_000)
-        let note = Note(
-            id: NoteID(rawValue: UUID()), text: text, createdAt: .milliseconds(1), modifiedAt: .milliseconds(2))
+        let cursor = "Emoji 👩🏽‍💻".utf8.count
+        let note = Note.sample(text, cursor: cursor)
 
         try await storage.save(note)
         let stored = try #require(try await storage.note(id: note.id))
 
         #expect(Array(stored.text.utf8) == Array(text.utf8))
+        #expect(stored.cursor == cursor)
     }
 
-    @Test func savingAgainChangesTextAndModifiedAtButKeepsTheFirstCreatedAt() async throws {
+    @Test func savingAgainChangesTextCursorAndModifiedAtButKeepsTheFirstCreatedAt() async throws {
         let id = NoteID(rawValue: UUID())
         try await storage.save(
-            Note(id: id, text: "first", createdAt: .milliseconds(1_000), modifiedAt: .milliseconds(1_000)))
+            Note.sample("first", id: id, cursor: 5, createdAt: .milliseconds(1_000), modifiedAt: .milliseconds(1_000)))
 
         try await storage.save(
-            Note(id: id, text: "second", createdAt: .milliseconds(9_000), modifiedAt: .milliseconds(5_000)))
+            Note.sample("second", id: id, cursor: 2, createdAt: .milliseconds(9_000), modifiedAt: .milliseconds(5_000)))
         let stored = try #require(try await storage.note(id: id))
 
         #expect(stored.text == "second")
+        #expect(stored.cursor == 2)
         #expect(stored.createdAt == .milliseconds(1_000))
         #expect(stored.modifiedAt == .milliseconds(5_000))
     }
@@ -43,10 +45,10 @@ struct NoteStorageTests {
 
     @Test func anEmptyNoteIsRefusedAndTheStoredNoteIsKept() async throws {
         let id = NoteID(rawValue: UUID())
-        try await storage.save(Note(id: id, text: "kept", createdAt: .milliseconds(1), modifiedAt: .milliseconds(1)))
+        try await storage.save(Note.sample("kept", id: id))
 
         await #expect(throws: NoteStorageError.emptyNote) {
-            try await storage.save(Note(id: id, text: " \n", createdAt: .milliseconds(1), modifiedAt: .milliseconds(2)))
+            try await storage.save(Note.sample(" \n", id: id, modifiedAt: .milliseconds(2)))
         }
         let stored = try #require(try await storage.note(id: id))
 
@@ -56,7 +58,7 @@ struct NoteStorageTests {
 
     @Test func deletingPermanentlyRemovesTheNote() async throws {
         let id = NoteID(rawValue: UUID())
-        try await storage.save(Note(id: id, text: "gone", createdAt: .milliseconds(1), modifiedAt: .milliseconds(1)))
+        try await storage.save(Note.sample("gone", id: id))
 
         try await storage.deletePermanently(id: id)
 
@@ -66,10 +68,21 @@ struct NoteStorageTests {
     @Test func deletingAnUnknownIDPermanentlySucceeds() async throws {
         try await storage.deletePermanently(id: NoteID(rawValue: UUID()))
     }
-}
 
-extension Date {
-    static func milliseconds(_ count: Int64) -> Date {
-        Date(timeIntervalSince1970: Double(count) / 1_000)
+    @Test func theMostRecentNoteIsTheNewestModifiedAfterTheCutoff() async throws {
+        for (text, modified) in [("older", 2_000), ("newest", 3_000), ("before the cutoff", 500)] {
+            try await storage.save(Note.sample(text, modifiedAt: .milliseconds(Int64(modified))))
+        }
+
+        let recent = try await storage.mostRecentNote(modifiedAfter: .milliseconds(1_000))
+
+        #expect(recent?.text == "newest")
+    }
+
+    @Test func aNoteModifiedAtOrBeforeTheCutoffIsNotRecent() async throws {
+        try await storage.save(Note.sample("at the cutoff", modifiedAt: .milliseconds(1_000)))
+        try await storage.save(Note.sample("before the cutoff", modifiedAt: .milliseconds(999)))
+
+        #expect(try await storage.mostRecentNote(modifiedAfter: .milliseconds(1_000)) == nil)
     }
 }

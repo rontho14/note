@@ -1,3 +1,4 @@
+public import Foundation
 import GRDB
 public import NoteCore
 
@@ -15,9 +16,10 @@ public struct SQLiteNoteStorage: NoteStorage {
         try await writer.write { db in
             try db.execute(
                 literal: """
-                    INSERT INTO note (id, text, createdAt, modifiedAt)
-                    VALUES (\(note.id.rawValue), \(note.text), \(note.createdAt), \(note.modifiedAt))
-                    ON CONFLICT (id) DO UPDATE SET text = excluded.text, modifiedAt = excluded.modifiedAt
+                    INSERT INTO note (id, text, cursor, createdAt, modifiedAt)
+                    VALUES (\(note.id.rawValue), \(note.text), \(note.cursor), \(note.createdAt), \(note.modifiedAt))
+                    ON CONFLICT (id) DO UPDATE
+                    SET text = excluded.text, cursor = excluded.cursor, modifiedAt = excluded.modifiedAt
                     """
             )
         }
@@ -26,6 +28,16 @@ public struct SQLiteNoteStorage: NoteStorage {
     public func note(id: NoteID) async throws -> Note? {
         try await writer.read { db in
             try NoteRecord.fetchOne(db, key: id.rawValue)?.note
+        }
+    }
+
+    public func mostRecentNote(modifiedAfter cutoff: Date) async throws -> Note? {
+        try await writer.read { db in
+            try NoteRecord
+                .filter(Column("modifiedAt") > cutoff)
+                .order(Column("modifiedAt").desc)
+                .fetchOne(db)?
+                .note
         }
     }
 
