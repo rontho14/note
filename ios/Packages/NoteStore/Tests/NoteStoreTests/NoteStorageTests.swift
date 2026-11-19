@@ -57,6 +57,28 @@ struct NoteStorageTests {
         #expect(stored.modifiedAt == .milliseconds(1))
     }
 
+    @Test func aBatchIsSavedTogether() async throws {
+        let notes = ["one", "two", "three"].enumerated().map { index, text in
+            Note.sample(text, modifiedAt: .milliseconds(Int64(index)))
+        }
+
+        try await storage.save(contentsOf: notes)
+
+        for note in notes {
+            #expect(try await storage.note(id: note.id)?.text == note.text)
+        }
+    }
+
+    @Test func aBatchWithAnEmptyNoteIsRefusedWhole() async throws {
+        let kept = Note.sample("would be kept")
+
+        await #expect(throws: NoteStorageError.emptyNote) {
+            try await storage.save(contentsOf: [kept, Note.sample(" \n")])
+        }
+
+        #expect(try await storage.note(id: kept.id) == nil)
+    }
+
     @Test func deletingPermanentlyRemovesTheNote() async throws {
         let id = NoteID(rawValue: UUID())
         try await storage.save(Note.sample("gone", id: id))

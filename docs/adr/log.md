@@ -14,3 +14,4 @@
 - 2026-11-16: Updated [0005](0005-app-structure-and-enforced-boundaries.md). `check-migrations.sh` fails when a migration already on `main` is edited, `MigrationTests` upgrades a database from an earlier version, and the caret is stored as a UTF-8 offset.
 - 2026-11-16: Updated [0005](0005-app-structure-and-enforced-boundaries.md). The launch ends at keyboard-up on the write screen, which stays on SwiftUI's `TextEditor`, and `check-owners.sh` keeps the launch screen's paper equal to `Palette.paper`.
 - 2026-11-16: Updated [0005](0005-app-structure-and-enforced-boundaries.md). The write screen takes the store, saves its draft when typing pauses for `WriteScreen.saveDelay` and on backgrounding, and stops the app when a save fails.
+- 2026-11-18: Updated [0005](0005-app-structure-and-enforced-boundaries.md). `NoteStorage` saves notes in all-or-none batches, and the notes list observes the store through `noteSummaries()`.

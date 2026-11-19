@@ -30,14 +30,14 @@ actor HeldStorage: NoteStorage {
         held.removeAll()
     }
 
-    func save(_ note: Note) async throws {
+    func save(contentsOf notes: [Note]) async throws {
         if holding {
             await withCheckedContinuation { continuation in
                 held.append(continuation)
                 arrived.yield()
             }
         }
-        try await wrapped.save(note)
+        try await wrapped.save(contentsOf: notes)
     }
 
     func note(id: NoteID) async throws -> Note? {
@@ -50,5 +50,9 @@ actor HeldStorage: NoteStorage {
 
     func mostRecentNote(modifiedAfter cutoff: Date) async throws -> Note? {
         try await wrapped.mostRecentNote(modifiedAfter: cutoff)
+    }
+
+    nonisolated func noteSummaries() -> any AsyncSequence<[NoteSummary], any Error> {
+        wrapped.noteSummaries()
     }
 }

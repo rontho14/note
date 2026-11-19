@@ -9,19 +9,21 @@ public struct SQLiteNoteStorage: NoteStorage {
         self.writer = writer
     }
 
-    public func save(_ note: Note) async throws {
-        guard !note.isEmpty else {
+    public func save(contentsOf notes: [Note]) async throws {
+        guard !notes.contains(where: \.isEmpty) else {
             throw NoteStorageError.emptyNote
         }
         try await writer.write { db in
-            try db.execute(
-                literal: """
-                    INSERT INTO note (id, text, cursor, createdAt, modifiedAt)
-                    VALUES (\(note.id.rawValue), \(note.text), \(note.cursor), \(note.createdAt), \(note.modifiedAt))
-                    ON CONFLICT (id) DO UPDATE
-                    SET text = excluded.text, cursor = excluded.cursor, modifiedAt = excluded.modifiedAt
-                    """
-            )
+            for note in notes {
+                try db.execute(
+                    literal: """
+                        INSERT INTO note (id, text, cursor, createdAt, modifiedAt)
+                        VALUES (\(note.id.rawValue), \(note.text), \(note.cursor), \(note.createdAt), \(note.modifiedAt))
+                        ON CONFLICT (id) DO UPDATE
+                        SET text = excluded.text, cursor = excluded.cursor, modifiedAt = excluded.modifiedAt
+                        """
+                )
+            }
         }
     }
 
@@ -45,5 +47,11 @@ public struct SQLiteNoteStorage: NoteStorage {
         try await writer.write { db in
             _ = try NoteRecord.deleteOne(db, key: id.rawValue)
         }
+    }
+
+    public func noteSummaries() -> any AsyncSequence<[NoteSummary], any Error> {
+        ValueObservation
+            .tracking { db in try NoteSummaryRecord.newestFirst.fetchAll(db).map(\.summary) }
+            .values(in: writer)
     }
 }
