@@ -31,7 +31,7 @@ Before calling a change done, run everything: lint, the import and compiler-sett
 make check
 ```
 
-`make ios-test` runs only the UI tests, built in the `DebugE2E` configuration so that launch arguments in `ios/Note/E2EHooks.swift` can put the app in a known state; `-reset-storage` starts it with no notes, and `-seed-notes <count>` adds that many fixed notes. It writes their screenshots to `build/ui-tests/<device> <iOS version>/`. Afterwards it reads the app's database on each simulator and fails if it holds an empty note. `ONLY=NoteE2ETests/LaunchTests/testLaunchOpensABlankNoteThatKeepsWhatIsTyped` runs a single one.
+`make ios-test` runs only the UI tests, built in the `DebugE2E` configuration so that the launch arguments in `ios/Note/E2EHooks.swift`, each documented there, can put the app in a known state. It writes their screenshots to `build/ui-tests/<device> <iOS version>/`. Afterwards it reads the app's database on each simulator and fails if it holds an empty note. `ONLY=NoteE2ETests/LaunchTests/testLaunchOpensABlankNoteThatKeepsWhatIsTyped` runs a single one.
 
 To see the app on several iPhones, and on iOS 26, the oldest version it supports:
 

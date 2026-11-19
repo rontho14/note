@@ -1,13 +1,23 @@
 #if E2E
     import Foundation
     import NoteCore
+    import NoteStore
 
     /// Launch arguments the UI tests start the app with, to put it in a known state. Only the E2E configuration builds
     /// this file, so no other build can be put in such a state.
     enum E2EHooks {
+        /// Opens the database at `location` the way the launch arguments ask: emptied first for `-reset-storage`, and
+        /// filled afterwards for `-seed-notes <count>`.
+        static func openStorage(at location: URL) throws(NoteDatabaseError) -> SQLiteNoteStorage {
+            emptyDatabaseFolderIfAsked(holding: location)
+            let storage = try NoteDatabase.openOnDisk(at: location)
+            seedNotesIfAsked(into: storage)
+            return storage
+        }
+
         /// Deletes every file in the folder that holds the database at `location`, the database's own folder, when the
-        /// app was launched with `-reset-storage`, so it starts with no notes. Runs before the database opens.
-        static func emptyDatabaseFolderIfAsked(holding location: URL) {
+        /// app was launched with `-reset-storage`, so it starts with no notes.
+        private static func emptyDatabaseFolderIfAsked(holding location: URL) {
             guard ProcessInfo.processInfo.arguments.contains("-reset-storage") else {
                 return
             }
@@ -25,7 +35,7 @@
         /// Starts saving `count` fixed notes into `storage` when the app was launched with `-seed-notes <count>`. Their
         /// lengths cycle through one word, one long line and many lines, and each was modified a minute before the
         /// next, all long ago, so none reopens on write.
-        static func seedNotesIfAsked(into storage: any NoteStorage) {
+        private static func seedNotesIfAsked(into storage: any NoteStorage) {
             let arguments = ProcessInfo.processInfo.arguments
             guard let flag = arguments.firstIndex(of: "-seed-notes") else {
                 return

@@ -7,9 +7,9 @@ struct NoteSummaryRecord: Decodable, FetchableRecord {
     let textStart: String
     let modifiedAt: Date
 
-    /// Every scalar with Unicode's White_Space property, the one `Character.isWhitespace` tests. The last is U+3000.
+    /// Every Unicode scalar with the White_Space property: what the text start skips at the beginning of a note.
     private static let whitespace = String(
-        String.UnicodeScalarView((0...0x3000).compactMap(Unicode.Scalar.init).filter(\.properties.isWhitespace)))
+        String.UnicodeScalarView((0...0x10FFFF).compactMap(Unicode.Scalar.init).filter(\.properties.isWhitespace)))
 
     /// The text start begins at the note's first character that isn't whitespace, so a note that opens with a long run
     /// of blank lines still reads its first words.

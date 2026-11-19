@@ -36,7 +36,7 @@ struct NoteSummariesTests {
     }
 
     @Test func aNoteThatOpensWithMoreWhitespaceThanThePreviewReadsStillHasAPreview() async throws {
-        let opening = String(repeating: "\n", count: NoteSummary.textStartLength) + "\u{3000}\u{A0} \t"
+        let opening = String(repeating: "\n", count: NoteSummary.textStartLength) + "\r\n\u{3000}\u{A0} \t"
         try await storage.save(Note.sample(opening + "First words"))
 
         let preview = try await currentSummaries().first?.preview

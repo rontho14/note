@@ -43,8 +43,8 @@ public struct ScreenStrip: View {
 
     /// Shows the note `id` on write, and moves there.
     private func open(_ id: NoteID) {
-        Task {
-            await stoppingTheAppOnFailure { try await writeModel.open(id: id) }
+        startNotesChange {
+            try await writeModel.open(id: id)
             withAnimation { position = .write }
         }
     }

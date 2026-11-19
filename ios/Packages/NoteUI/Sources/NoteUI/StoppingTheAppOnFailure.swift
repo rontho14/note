@@ -8,3 +8,9 @@ func stoppingTheAppOnFailure(_ change: () async throws -> Void) async {
         fatalError("The notes couldn't be loaded or stored: \(error)")
     }
 }
+
+/// Starts `change` in a task of its own, without waiting for it to finish. A change that fails stops the app, as in
+/// `stoppingTheAppOnFailure`.
+func startNotesChange(_ change: @escaping () async throws -> Void) {
+    Task { await stoppingTheAppOnFailure(change) }
+}

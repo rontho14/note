@@ -7,15 +7,15 @@ public struct NoteSummary: Sendable, Equatable, Identifiable {
     public static let textStartLength = 200
 
     public let id: NoteID
-    /// The note's first words on one line: leading whitespace dropped, and each run of line breaks shown as one space.
-    /// Only drawn, never stored.
+    /// The note's first words on one line, with each run of line breaks shown as one space. Only drawn, never stored.
     public let preview: String
     public let modifiedAt: Date
 
-    /// `textStart` is the start of the note's text, up to `textStartLength` Unicode scalars.
+    /// `textStart` is the note's text from its first scalar that isn't whitespace, up to `textStartLength` Unicode
+    /// scalars.
     public init(id: NoteID, textStart: String, modifiedAt: Date) {
         self.id = id
-        self.preview = textStart.drop(while: \.isWhitespace).split(whereSeparator: \.isNewline).joined(separator: " ")
+        self.preview = textStart.split(whereSeparator: \.isNewline).joined(separator: " ")
         self.modifiedAt = modifiedAt
     }
 }

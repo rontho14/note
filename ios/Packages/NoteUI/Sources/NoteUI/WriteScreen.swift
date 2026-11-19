@@ -49,15 +49,15 @@ struct WriteScreen: View {
             .onChange(of: isShown) { _, shown in
                 isEditing = shown
                 if !shown {
-                    startDraftChange { try await model.saveDraft(now: .now) }
+                    startNotesChange { try await model.saveDraft(now: .now) }
                 }
             }
             .onChange(of: scenePhase) { _, phase in
                 switch phase {
                 case .background:
-                    startDraftChange { try await model.saveDraft(now: .now) }
+                    startNotesChange { try await model.saveDraft(now: .now) }
                 case .active:
-                    startDraftChange { try await model.returnToForeground(now: .now) }
+                    startNotesChange { try await model.returnToForeground(now: .now) }
                 default:
                     break
                 }
@@ -65,13 +65,6 @@ struct WriteScreen: View {
             .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardDidShowNotification)) { _ in
                 onKeyboardUp()
             }
-    }
-}
-
-extension WriteScreen {
-    /// Starts a change to the draft without waiting for it to finish. A change that fails stops the app.
-    private func startDraftChange(_ change: @escaping () async throws -> Void) {
-        Task { await stoppingTheAppOnFailure(change) }
     }
 }
 
