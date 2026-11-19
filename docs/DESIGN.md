@@ -109,6 +109,8 @@ Source Serif 4 and Bodoni Moda are both under the SIL Open Font License 1.1. I r
 | Icons | 24, stroke 1.4, round caps |
 | Caret | 2 points wide, accent |
 
+`ListLayout` in `NoteUI` holds the list numbers every list shares: the side padding and the first row's top.
+
 ## Screens
 
 ### Write
@@ -132,6 +134,8 @@ A checkbox item has a 22 point box with corners of 5. A checked box is filled wi
 A search bar sits at the top, 58 points from the top of the screen. It is 44 points tall, fully rounded, in the surface color with a hairline border, and holds a magnifier in the second color. It has no placeholder word. The bar stays in place while the list scrolls under it, and a hairline under the bar marks the edge once the list has moved. A thin scroll indicator shows on the right while scrolling.
 
 Each row has a 54 point date column on the left and the note on the right, with 12 points between them and 13 points of padding above and below. The note is one line of title or preview, with its drawer label under it. A draft has a 7 point ring in the accent before its preview, and its label reads Draft. The date column says `now`, `today` or a short date such as `9 Nov`. Every row is the same height, which keeps a long list from jumping as it scrolls.
+
+The date column says `now` for under a minute ago, `today` for earlier the same day, `9 Nov` for earlier the same year, and `9 Nov 2025` before that. `ListDate` in `NoteCore` owns the rule. A preview drops the note's leading whitespace and shows each run of line breaks as one space, so the line fills with words; `NoteSummary` owns that rule. The stored text is never changed.
 
 On first launch the list area shows `No notes yet.` in italic in the second color.
 

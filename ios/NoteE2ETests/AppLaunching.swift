@@ -5,7 +5,18 @@ extension XCUIApplication {
     /// Launches the app with its database deleted first, so it starts with no notes, and waits for the write screen.
     /// Later launches keep the notes, as a user's would.
     @MainActor func launchWithNoNotes(file: StaticString = #filePath, line: UInt = #line) {
-        launchArguments = ["-reset-storage"]
+        launchOnce(with: ["-reset-storage"], file: file, line: line)
+    }
+
+    /// Launches the app with its database holding only `count` seeded notes, all too old to reopen, and waits for the
+    /// write screen. Later launches keep the notes.
+    @MainActor func launchWithNotesSeeded(_ count: Int, file: StaticString = #filePath, line: UInt = #line) {
+        launchOnce(with: ["-reset-storage", "-seed-notes", String(count)], file: file, line: line)
+    }
+
+    /// Launches the app with `arguments` and waits for the write screen. Later launches go without them.
+    @MainActor private func launchOnce(with arguments: [String], file: StaticString, line: UInt) {
+        launchArguments = arguments
         launch()
         launchArguments = []
         waitForWriteScreen(file: file, line: line)
@@ -27,7 +38,33 @@ extension XCUIApplication {
     }
 }
 
+extension XCUIApplication {
+    enum StripDirection {
+        case towardTheLeftEnd, towardTheRightEnd
+    }
+
+    /// Drags across most of the screen's width, high enough to stay clear of the keyboard.
+    @MainActor func swipeAlongTheStrip(_ direction: StripDirection) {
+        let (from, to): (CGFloat, CGFloat) = direction == .towardTheLeftEnd ? (0.1, 0.9) : (0.9, 0.1)
+        coordinate(withNormalizedOffset: CGVector(dx: from, dy: 0.3))
+            .press(forDuration: 0, thenDragTo: coordinate(withNormalizedOffset: CGVector(dx: to, dy: 0.3)))
+    }
+}
+
 extension XCTestCase {
+    /// Fails unless the screen identified by `screen` settles inside the window. The screens beside it lie outside.
+    @MainActor func assertShown(
+        _ screen: String, in app: XCUIApplication, file: StaticString = #filePath, line: UInt = #line
+    ) {
+        let element = app.descendants(matching: .any)[screen]
+        let window = app.windows.firstMatch
+        let settled = XCTNSPredicateExpectation(
+            predicate: NSPredicate { _, _ in window.frame.contains(element.frame) }, object: nil)
+        if XCTWaiter.wait(for: [settled], timeout: 5) != .completed {
+            XCTFail("\(screen) is not on screen", file: file, line: line)
+        }
+    }
+
     @MainActor func attachScreenshot(of app: XCUIApplication, named name: String) {
         let shot = XCTAttachment(screenshot: app.screenshot())
         shot.name = name

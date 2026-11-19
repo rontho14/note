@@ -15,6 +15,9 @@ struct NoteApp: App {
                 E2EHooks.emptyDatabaseFolderIfAsked(holding: location)
             #endif
             storage = try NoteDatabase.openOnDisk(at: location)
+            #if E2E
+                E2EHooks.seedNotesIfAsked(into: storage)
+            #endif
         } catch {
             fatalError(error.description)
         }

@@ -73,17 +73,6 @@ extension WriteScreen {
     private func startDraftChange(_ change: @escaping () async throws -> Void) {
         Task { await stoppingTheAppOnFailure(change) }
     }
-
-    /// Runs a change to the draft, and stops the app if it fails. A store that fails is a lost draft with no screen to
-    /// say so, so the app stops, as it does for a database that won't open. The typing since the last successful save
-    /// is lost.
-    private func stoppingTheAppOnFailure(_ change: () async throws -> Void) async {
-        do {
-            try await change()
-        } catch {
-            fatalError("The draft couldn't be loaded or stored: \(error)")
-        }
-    }
 }
 
 /// DESIGN.md's Write numbers, and the insets `TextEditor` adds inside its frame, measured from the `write` screenshot.

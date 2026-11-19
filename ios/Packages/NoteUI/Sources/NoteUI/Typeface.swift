@@ -10,12 +10,18 @@ enum Typeface {
     static let writeLineSpacing = 28 - lineHeight(of: writeFont)
     /// Bodoni Moda italic at weight 400, 28 points, for the `Unsorted` drawer.
     static let unsorted = Font(font("BodoniModa-Italic", size: 28))
+    /// Source Serif 4 italic at weight 400, 17 points: a note's first words in the notes list.
+    static let preview = Font(font("SourceSerif4-Italic", size: 17))
+    /// Source Serif 4 at weight 400, 13 points: the notes list's date column.
+    static let date = Font(font("SourceSerif4-Roman", size: 13))
+    /// Source Serif 4 at weight 600, 10.5 points: the drawer label under a note in a list.
+    static let label = Font(font("SourceSerif4-Roman", weight: 600, size: 10.5))
 
     private static let writeFont = font("SourceSerif4-Italic", size: 17.5)
 
-    /// The bundled variable font `Fonts/<file>.ttf` at weight 400, with its optical size set to `size`, and old-style
+    /// The bundled variable font `Fonts/<file>.ttf` at `weight`, with its optical size set to `size`, and old-style
     /// figures.
-    private static func font(_ file: String, size: CGFloat) -> CTFont {
+    private static func font(_ file: String, weight: Int = 400, size: CGFloat) -> CTFont {
         guard
             let url = Bundle.module.url(forResource: file, withExtension: "ttf", subdirectory: "Fonts"),
             let face = (CTFontManagerCreateFontDescriptorsFromURL(url as CFURL) as? [CTFontDescriptor])?.first
@@ -23,7 +29,7 @@ enum Typeface {
             fatalError("Fonts/\(file).ttf is missing from NoteUI's bundle or isn't a font")
         }
         let attributes: [CFString: Any] = [
-            kCTFontVariationAttribute: [axis("wght"): 400, axis("opsz"): size],
+            kCTFontVariationAttribute: [axis("wght"): weight, axis("opsz"): size],
             kCTFontFeatureSettingsAttribute: [
                 [kCTFontOpenTypeFeatureTag: "onum", kCTFontOpenTypeFeatureValue: 1]
             ],

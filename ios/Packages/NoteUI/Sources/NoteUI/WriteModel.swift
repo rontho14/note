@@ -24,18 +24,17 @@ final class WriteModel {
 
     /// Shows the most recent note modified inside the reopen window, with its caret, if there is one.
     func loadRecentDraft(now: Date) async throws {
-        try await enqueue {
-            guard let recent = try await self.storage.mostRecentNote(modifiedAfter: DraftReopening.cutoff(now: now))
-            else {
-                return
-            }
-            self.show(recent)
-        }.value
+        try await showIfFound { try await self.storage.mostRecentNote(modifiedAfter: DraftReopening.cutoff(now: now)) }
     }
 
     /// Stores the text and caret as the draft, or deletes the draft once its text is empty, as `DraftChange` decides.
     func saveDraft(now: Date) async throws {
         try await enqueue { try await self.writeDraft(now: now) }.value
+    }
+
+    /// Shows the note `id` with its caret. A note that is gone leaves the screen as it was.
+    func open(id: NoteID) async throws {
+        try await showIfFound { try await self.storage.note(id: id) }
     }
 
     /// Keeps the draft when it was modified inside the reopen window, and otherwise starts a blank note. The draft
@@ -46,6 +45,17 @@ final class WriteModel {
                 return
             }
             self.show(nil)
+        }.value
+    }
+
+    /// Shows the note `fetch` finds with its caret, after every earlier change. Finding none leaves the screen as it
+    /// was.
+    private func showIfFound(_ fetch: @escaping () async throws -> Note?) async throws {
+        try await enqueue {
+            guard let note = try await fetch() else {
+                return
+            }
+            self.show(note)
         }.value
     }
 

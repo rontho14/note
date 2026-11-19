@@ -39,6 +39,7 @@ targets:
     platform: iOS
     sources: [Note]
     dependencies:
+      - package: NoteCore
       - package: NoteStore
       - package: NoteTelemetry
       - package: NoteUI

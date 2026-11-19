@@ -12,8 +12,8 @@ struct DrawersScreen: View {
                 .accessibilityIdentifier(AccessibilityID.drawersUnsorted)
             Spacer(minLength: 0)
         }
-        .padding(.horizontal, Layout.side)
-        .padding(.top, Layout.firstRowTop)
+        .padding(.horizontal, ListLayout.side)
+        .padding(.top, ListLayout.firstRowTop)
         .frame(maxWidth: .infinity, alignment: .leading)
         .ignoresSafeArea(.container, edges: .top)
         .accessibilityElement(children: .contain)
@@ -21,10 +21,8 @@ struct DrawersScreen: View {
     }
 }
 
-/// DESIGN.md's Drawers and list numbers.
+/// DESIGN.md's Drawers numbers.
 private enum Layout {
-    static let side: CGFloat = 26
-    static let firstRowTop: CGFloat = 58
     static let rowLine: CGFloat = 40
     static let rowPadding: CGFloat = 8
 }

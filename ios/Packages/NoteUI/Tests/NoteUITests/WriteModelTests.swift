@@ -116,6 +116,36 @@ struct WriteModelTests {
         #expect(try await storage.note(id: draft.id)?.text == "kept more")
     }
 
+    @Test func openingANoteShowsItWithItsCaret() async throws {
+        let listed = Note.sample("listed e\u{301}", cursor: 6, modifiedAt: .minutes(1))
+        try await storage.save(listed)
+
+        try await model.open(id: listed.id)
+
+        #expect(model.text == "listed e\u{301}")
+        #expect(caret() == 6)
+    }
+
+    @Test func anOpenedNoteIsTheOneEdited() async throws {
+        let listed = Note.sample("listed", modifiedAt: .minutes(1))
+        try await storage.save(listed)
+
+        try await model.open(id: listed.id)
+        type("listed, edited")
+        try await model.saveDraft(now: .minutes(11))
+
+        #expect(try await storage.note(id: listed.id)?.text == "listed, edited")
+        #expect(try await storage.mostRecentNote(modifiedAfter: .minutes(0))?.id == listed.id)
+    }
+
+    @Test func openingANoteThatIsGoneLeavesTheScreenAsItWas() async throws {
+        type("on screen")
+
+        try await model.open(id: NoteID(rawValue: UUID()))
+
+        #expect(model.text == "on screen")
+    }
+
     private func type(_ text: String, caretAfter prefix: String? = nil) {
         model.text = text
         let caret = prefix.map { text.utf8.index(text.startIndex, offsetBy: $0.utf8.count) } ?? text.endIndex
