@@ -17,7 +17,7 @@ for package in ${ios_only_packages[@]+"${ios_only_packages[@]}"}; do
         target="$(basename "$folder")"
         if ! grep -q "package: $name/$target\$" ios/project.yml; then
             printf "an iOS-only package's test targets are in the Note scheme: %s:%d %s\n" "$package/Package.swift" 1 \
-                "$target runs nowhere. Add package: $name/$target to the Note scheme's testTargets in ios/project.yml" >&2
+                "$target runs nowhere. Add package: $name/$target to schemes: Note: test: targets: in ios/project.yml" >&2
             failed=1
         fi
     done

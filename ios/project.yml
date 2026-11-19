@@ -5,6 +5,10 @@ options:
   deploymentTarget:
     iOS: "26.0"
   createIntermediateGroups: true
+configs:
+  Debug: debug
+  DebugE2E: debug
+  Release: release
 packages:
   NoteCore:
     path: Packages/NoteCore
@@ -26,6 +30,9 @@ settings:
     SWIFT_DEFAULT_ACTOR_ISOLATION: MainActor
     MARKETING_VERSION: "0.1.0"
     CURRENT_PROJECT_VERSION: "1"
+  configs:
+    DebugE2E:
+      SWIFT_ACTIVE_COMPILATION_CONDITIONS: DEBUG E2E
 targets:
   Note:
     type: application
@@ -35,10 +42,6 @@ targets:
       - package: NoteStore
       - package: NoteTelemetry
       - package: NoteUI
-    scheme:
-      testTargets:
-        - NoteE2ETests
-        - package: NoteUI/NoteUITests
     info:
       path: Note/Info.plist
       properties:
@@ -60,7 +63,26 @@ targets:
     sources: [NoteE2ETests]
     dependencies:
       - target: Note
+      - package: NoteCore
       - package: NoteUI
     info:
       path: NoteE2ETests/Info.plist
       properties: {}
+schemes:
+  Note:
+    build:
+      targets:
+        Note: all
+    run:
+      config: Debug
+    test:
+      config: DebugE2E
+      targets:
+        - NoteE2ETests
+        - package: NoteUI/NoteUITests
+    profile:
+      config: Release
+    analyze:
+      config: Debug
+    archive:
+      config: Release

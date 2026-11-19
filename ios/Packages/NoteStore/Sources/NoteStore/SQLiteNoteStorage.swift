@@ -37,7 +37,7 @@ public struct SQLiteNoteStorage: NoteStorage {
         try await writer.read { db in
             try NoteRecord
                 .filter(Column("modifiedAt") > cutoff)
-                .order(Column("modifiedAt").desc)
+                .order(literal: NoteRecord.newestFirstOrder)
                 .fetchOne(db)?
                 .note
         }

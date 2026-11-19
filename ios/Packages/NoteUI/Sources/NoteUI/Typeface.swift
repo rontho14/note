@@ -8,16 +8,19 @@ enum Typeface {
     static let write = Font(writeFont)
     /// The spacing that brings a line of `write` to 28 points.
     static let writeLineSpacing = 28 - lineHeight(of: writeFont)
+    /// Bodoni Moda italic at weight 400, 28 points, for the `Unsorted` drawer.
+    static let unsorted = Font(font("BodoniModa-Italic", size: 28))
 
-    private static let writeFont = sourceSerifItalic(size: 17.5)
+    private static let writeFont = font("SourceSerif4-Italic", size: 17.5)
 
-    private static func sourceSerifItalic(size: CGFloat) -> CTFont {
+    /// The bundled variable font `Fonts/<file>.ttf` at weight 400, with its optical size set to `size`, and old-style
+    /// figures.
+    private static func font(_ file: String, size: CGFloat) -> CTFont {
         guard
-            let url = Bundle.module.url(
-                forResource: "SourceSerif4-Italic", withExtension: "ttf", subdirectory: "Fonts"),
-            let file = (CTFontManagerCreateFontDescriptorsFromURL(url as CFURL) as? [CTFontDescriptor])?.first
+            let url = Bundle.module.url(forResource: file, withExtension: "ttf", subdirectory: "Fonts"),
+            let face = (CTFontManagerCreateFontDescriptorsFromURL(url as CFURL) as? [CTFontDescriptor])?.first
         else {
-            fatalError("Fonts/SourceSerif4-Italic.ttf is missing from NoteUI's bundle or isn't a font")
+            fatalError("Fonts/\(file).ttf is missing from NoteUI's bundle or isn't a font")
         }
         let attributes: [CFString: Any] = [
             kCTFontVariationAttribute: [axis("wght"): 400, axis("opsz"): size],
@@ -26,7 +29,7 @@ enum Typeface {
             ],
         ]
         return CTFontCreateWithFontDescriptor(
-            CTFontDescriptorCreateCopyWithAttributes(file, attributes as CFDictionary), size, nil)
+            CTFontDescriptorCreateCopyWithAttributes(face, attributes as CFDictionary), size, nil)
     }
 
     /// A variation axis's identifier: its four-letter tag read as a big-endian number.

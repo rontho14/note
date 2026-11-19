@@ -125,7 +125,7 @@ done
 rm -rf "$exported"
 echo "run-ui-tests: screenshots in $results"
 
-bundle_id="$(plutil -extract CFBundleIdentifier raw "$derived_data/Build/Products/Debug-iphonesimulator/Note.app/Info.plist")"
+bundle_id="$(plutil -extract CFBundleIdentifier raw "$derived_data/Build/Products/DebugE2E-iphonesimulator/Note.app/Info.plist")"
 swift build --package-path ios/Packages/NoteStore --product NoteInvariants --quiet
 invariants="$(swift build --package-path ios/Packages/NoteStore --show-bin-path)/NoteInvariants"
 for index in "${!udids[@]}"; do

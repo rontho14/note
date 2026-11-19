@@ -10,7 +10,11 @@ struct NoteApp: App {
 
     init() {
         do throws(NoteDatabaseError) {
-            storage = try NoteDatabase.openOnDisk(at: NoteDatabase.defaultLocation(fileManager: .default))
+            let location = try NoteDatabase.defaultLocation(fileManager: .default)
+            #if E2E
+                E2EHooks.emptyDatabaseFolderIfAsked(holding: location)
+            #endif
+            storage = try NoteDatabase.openOnDisk(at: location)
         } catch {
             fatalError(error.description)
         }
@@ -18,7 +22,7 @@ struct NoteApp: App {
 
     var body: some Scene {
         WindowGroup {
-            WriteScreen(storage: storage, onKeyboardUp: { launch.recordLaunched() })
+            ScreenStrip(storage: storage, onKeyboardUp: { launch.recordLaunched() })
         }
     }
 }

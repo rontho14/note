@@ -108,4 +108,17 @@ struct NoteStorageTests {
 
         #expect(try await storage.mostRecentNote(modifiedAfter: .milliseconds(1_000)) == nil)
     }
+
+    @Test func ofTwoNotesModifiedAtOnceTheMostRecentIsTheOneTheListShowsFirst() async throws {
+        let first = try #require(UUID(uuidString: "00000000-0000-0000-0000-000000000001"))
+        let second = try #require(UUID(uuidString: "00000000-0000-0000-0000-000000000002"))
+        try await storage.save(Note.sample("first", id: NoteID(rawValue: first), modifiedAt: .milliseconds(2_000)))
+        try await storage.save(Note.sample("second", id: NoteID(rawValue: second), modifiedAt: .milliseconds(2_000)))
+
+        let recent = try await storage.mostRecentNote(modifiedAfter: .milliseconds(1_000))
+        var summaries = storage.noteSummaries().makeAsyncIterator()
+        let listed = try await summaries.next(isolation: #isolation)
+
+        #expect(recent?.id == listed?.first?.id)
+    }
 }

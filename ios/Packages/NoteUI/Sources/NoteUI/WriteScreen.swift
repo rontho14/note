@@ -1,72 +1,79 @@
-public import NoteCore
-public import SwiftUI
+import NoteCore
+import SwiftUI
 import UIKit
 
 /// The note being written and nothing else: the editor fills the paper, and the keyboard comes up at launch, on the
-/// recent draft or on a blank note. What is typed is saved `saveDelay` after the last keystroke, and at once when the
-/// app goes to the background.
-public struct WriteScreen: View {
-    /// How long typing must pause before the draft is saved.
-    nonisolated public static let saveDelay: Duration = .seconds(2)
-
+/// recent draft or on a blank note, and whenever the screen is shown again. What is typed is saved `DraftSaving.delay`
+/// after the last keystroke, and at once when the screen is left or the app goes to the background.
+struct WriteScreen: View {
+    private let isShown: Bool
     private let onKeyboardUp: () -> Void
-    @State private var model: WriteModel
+    @Bindable private var model: WriteModel
     @FocusState private var isEditing: Bool
     @Environment(\.scenePhase) private var scenePhase
 
-    /// `onKeyboardUp` runs each time the keyboard finishes appearing.
-    public init(storage: any NoteStorage, onKeyboardUp: @escaping () -> Void) {
-        _model = State(initialValue: WriteModel(storage: storage))
+    /// `isShown` is whether the screen is the one on screen. `onKeyboardUp` runs each time the keyboard finishes
+    /// appearing.
+    init(model: WriteModel, isShown: Bool, onKeyboardUp: @escaping () -> Void) {
+        self.model = model
+        self.isShown = isShown
         self.onKeyboardUp = onKeyboardUp
     }
 
-    public var body: some View {
-        ZStack {
-            Palette.paper
-                .ignoresSafeArea()
-            TextEditor(text: $model.text, selection: $model.selection)
-                .font(Typeface.write)
-                .lineSpacing(Typeface.writeLineSpacing)
-                .foregroundStyle(Palette.ink)
-                .tint(Palette.accent)
-                .scrollContentBackground(.hidden)
-                .focused($isEditing)
-                .accessibilityIdentifier(AccessibilityID.writeText)
-                .padding(.horizontal, Layout.textSide - Layout.editorSideInset)
-                .padding(.top, Layout.firstLineTop - Layout.editorTopInset)
-                .ignoresSafeArea(.container, edges: .top)
-        }
-        .accessibilityElement(children: .contain)
-        .accessibilityIdentifier(AccessibilityID.write)
-        .task {
-            await stoppingTheAppOnFailure { try await model.loadRecentDraft(now: .now) }
-            isEditing = true
-        }
-        .task(id: model.text) {
-            do {
-                try await Task.sleep(for: Self.saveDelay)
-            } catch {
-                return  // A keystroke cancelled the wait and started a new one.
+    var body: some View {
+        TextEditor(text: $model.text, selection: $model.selection)
+            .font(Typeface.write)
+            .lineSpacing(Typeface.writeLineSpacing)
+            .foregroundStyle(Palette.ink)
+            .tint(Palette.accent)
+            .scrollContentBackground(.hidden)
+            .focused($isEditing)
+            .accessibilityIdentifier(AccessibilityID.writeText)
+            .padding(.horizontal, Layout.textSide - Layout.editorSideInset)
+            .padding(.top, Layout.firstLineTop - Layout.editorTopInset)
+            .ignoresSafeArea(.container, edges: .top)
+            .accessibilityElement(children: .contain)
+            .accessibilityIdentifier(AccessibilityID.write)
+            .task {
+                await stoppingTheAppOnFailure { try await model.loadRecentDraft(now: .now) }
+                isEditing = isShown
             }
-            await stoppingTheAppOnFailure { try await model.saveDraft(now: .now) }
-        }
-        .onChange(of: scenePhase) { _, phase in
-            switch phase {
-            case .background:
-                Task { await stoppingTheAppOnFailure { try await model.saveDraft(now: .now) } }
-            case .active:
-                Task { await stoppingTheAppOnFailure { try await model.returnToForeground(now: .now) } }
-            default:
-                break
+            .task(id: model.text) {
+                do {
+                    try await Task.sleep(for: DraftSaving.delay)
+                } catch {
+                    return  // A keystroke cancelled the wait and started a new one.
+                }
+                await stoppingTheAppOnFailure { try await model.saveDraft(now: .now) }
             }
-        }
-        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardDidShowNotification)) { _ in
-            onKeyboardUp()
-        }
+            .onChange(of: isShown) { _, shown in
+                isEditing = shown
+                if !shown {
+                    startDraftChange { try await model.saveDraft(now: .now) }
+                }
+            }
+            .onChange(of: scenePhase) { _, phase in
+                switch phase {
+                case .background:
+                    startDraftChange { try await model.saveDraft(now: .now) }
+                case .active:
+                    startDraftChange { try await model.returnToForeground(now: .now) }
+                default:
+                    break
+                }
+            }
+            .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardDidShowNotification)) { _ in
+                onKeyboardUp()
+            }
     }
 }
 
 extension WriteScreen {
+    /// Starts a change to the draft without waiting for it to finish. A change that fails stops the app.
+    private func startDraftChange(_ change: @escaping () async throws -> Void) {
+        Task { await stoppingTheAppOnFailure(change) }
+    }
+
     /// Runs a change to the draft, and stops the app if it fails. A store that fails is a lost draft with no screen to
     /// say so, so the app stops, as it does for a database that won't open. The typing since the last successful save
     /// is lost.
