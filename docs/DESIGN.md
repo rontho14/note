@@ -135,7 +135,7 @@ A search bar sits at the top, 58 points from the top of the screen. It is 44 poi
 
 Each row has a 54 point date column on the left and the note on the right, with 12 points between them and 13 points of padding above and below. The note is one line of title or preview, with its drawer label under it. A draft has a 7 point ring in the accent before its preview, and its label reads Draft. The date column says `now`, `today` or a short date such as `9 Nov`. Every row is the same height, which keeps a long list from jumping as it scrolls.
 
-The date column says `now` for under a minute ago, `today` for earlier the same day, `9 Nov` for earlier the same year, and `9 Nov 2025` before that. `ListDate` in `NoteCore` owns the rule. A preview drops the note's leading whitespace and shows each run of line breaks as one space, so the line fills with words. `NoteStore` drops the whitespace as it reads, and `NoteSummary` joins the lines. The stored text is never changed.
+The date column says `now` for under a minute ago, `today` for earlier the same day, and a day and month such as `9 Nov` before that, with no year, so every date fits the column. `ListDate` in `NoteCore` owns the rule. A preview drops the note's leading whitespace and shows each run of line breaks as one space, so the line fills with words. `NoteStore` drops the whitespace as it reads, and `NoteSummary` joins the lines. The stored text is never changed.
 
 On first launch the list area shows `No notes yet.` in italic in the second color.
 

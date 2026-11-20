@@ -53,10 +53,9 @@ struct ListDateTests {
         #expect(ListDate.text(for: date(2026, 9, 9), now: date(2026, 11, 9), calendar: calendar) == "9 Sep")
     }
 
-    @Test func aNoteFromLastYearShowsTheYear() {
+    @Test func aNoteFromAnEarlierYearShowsOnlyDayAndMonth() {
         #expect(
-            ListDate.text(for: date(2025, 12, 31, 23, 0), now: date(2026, 1, 1, 0, 30), calendar: calendar)
-                == "31 Dec 2025")
+            ListDate.text(for: date(2025, 12, 31, 23, 0), now: date(2026, 1, 1, 0, 30), calendar: calendar) == "31 Dec")
     }
 
     @Test func aNoteModifiedAfterNowIsNow() {
