@@ -6,6 +6,8 @@ struct NoteSummaryRecord: Decodable, FetchableRecord {
     let id: UUID
     let textStart: String
     let modifiedAt: Date
+    let title: String?
+    let isDraft: Bool
 
     /// Every Unicode scalar with the White_Space property: what the text start skips at the beginning of a note.
     private static let whitespace = String(
@@ -14,13 +16,16 @@ struct NoteSummaryRecord: Decodable, FetchableRecord {
     /// The text start begins at the note's first character that isn't whitespace, so a note that opens with a long run
     /// of blank lines still reads its first words.
     static let newestFirst: SQLRequest<NoteSummaryRecord> = """
-        SELECT id, substr(ltrim(text, \(whitespace)), 1, \(NoteSummary.textStartLength)) AS textStart, modifiedAt
+        SELECT id, substr(ltrim(text, \(whitespace)), 1, \(NoteSummary.textStartLength)) AS textStart, modifiedAt,
+            title, \(NoteRecord.isDraft) AS isDraft
         FROM note
         WHERE \(NoteRecord.isOutsideTheTrash)
         ORDER BY \(NoteRecord.newestFirstOrder)
         """
 
     var summary: NoteSummary {
-        NoteSummary(id: NoteID(rawValue: id), textStart: textStart, modifiedAt: modifiedAt)
+        NoteSummary(
+            id: NoteID(rawValue: id), textStart: textStart, modifiedAt: modifiedAt,
+            kind: isDraft ? .draft : .saved(title: title))
     }
 }

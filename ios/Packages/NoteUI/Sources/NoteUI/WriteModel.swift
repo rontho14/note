@@ -102,18 +102,22 @@ final class WriteModel {
         sheet = .hidden
     }
 
-    /// Leaving write for notes: stores the change `LeavingWrite` decides, then blanks write. Text never saved is held on
-    /// write until the sheet is answered, so it stays as it is.
-    func leave(now: Date) async throws {
+    /// Leaving write for notes: stores the change `LeavingWrite` decides, then blanks write, and returns the saved note
+    /// write was left on, which the list shows: one just saved, or one with nothing new to save. Text never saved is
+    /// held on write until the sheet is answered, so it stays as it is.
+    func leave(now: Date) async throws -> NoteID? {
+        var saved: NoteID?
         try await enqueue {
             let answer: SaveSheetAnswer? = if case .answered(let answer) = self.sheet { answer } else { nil }
             guard let change = LeavingWrite.change(self.screen, over: self.stored, answer: answer, now: now) else {
                 return
             }
             try await self.apply(change)
+            saved = self.stored.flatMap { $0.isDraft ? nil : $0.id }
             self.show(nil)
             self.sheet = .hidden
         }.value
+        return saved
     }
 
     /// Shows the note `fetch` finds with its caret, after every earlier change. Finding none leaves the screen as it

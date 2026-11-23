@@ -96,12 +96,97 @@ nonisolated final class SavingTests: XCTestCase {
         XCTAssertEqual(text.value as? String, "Saved again", "a saved note edited since its save reopens")
     }
 
-    /// Types `note` on write, swipes toward notes and saves it through the sheet, untitled.
-    @MainActor private func saveANote(_ note: String, in app: XCUIApplication) {
+    @MainActor func testSavedNotesAreListedTitledOrUntitledBesideDraftsAndUnsortedCountsThem() {
+        let app = XCUIApplication()
+        app.launchWithNotesSeeded(1)
+        saveANote("Untitled note", in: app)
+        backToWrite(app)
+        saveANote("Body under a title", titled: "A title", in: app)
+        backToWrite(app)
+        saveANote("Spaces only", titled: "   ", in: app)
+        app.swipeAlongTheStrip(.towardTheRightEnd)
+        app.waitForWriteScreen()
+        XCTAssertEqual(app.textViews[AccessibilityID.writeText].value as? String, "", "write is blank after a save")
+        app.textViews[AccessibilityID.writeText].typeText("Doomed")
+        app.swipeAlongTheStrip(.towardTheLeftEnd)
+        XCTAssertTrue(app.saveSheet.waitForExistence(timeout: 5))
+        app.buttons[AccessibilityID.saveDelete].tap()
+
+        let labels = waitForRows(4, in: app)
+        XCTAssertTrue(labels[0].contains("Spaces only") && labels[0].contains("UNSORTED"), labels[0])
+        XCTAssertTrue(labels[1].contains("A title") && !labels[1].contains("Body"), labels[1])
+        XCTAssertTrue(labels[2].contains("Untitled note") && labels[2].contains("UNSORTED"), labels[2])
+        XCTAssertTrue(labels[3].contains("Seeded 0") && labels[3].contains("DRAFT"), labels[3])
+        let heights = Set(rows(in: app).allElementsBoundByIndex.map(\.frame.height))
+        XCTAssertEqual(heights.count, 1, "every kind of row is the same height: \(heights)")
+        attachScreenshot(of: app, named: "\(AccessibilityID.notes).saved")
+
+        app.swipeAlongTheStrip(.towardTheLeftEnd)
+        assertShown(AccessibilityID.drawers, in: app)
+        let count = app.staticTexts[AccessibilityID.drawersUnsortedCount]
+        XCTAssertTrue(count.waitForExistence(timeout: 5))
+        XCTAssertEqual(count.label, "3", "three saved notes, not the draft or the note in the trash")
+    }
+
+    @MainActor func testAnEditedSavedNoteSavesStraightToTheTopAndAnUnchangedOneKeepsItsPlace() {
+        let app = XCUIApplication()
+        let text = app.textViews[AccessibilityID.writeText]
+        app.launchWithNoNotes()
+        saveANote("First", in: app)
+        backToWrite(app)
+        saveANote("Second", in: app)
+        XCTAssertTrue(waitForRows(2, in: app)[0].contains("Second"))
+
+        rows(in: app).element(boundBy: 1).tap()
+        app.waitForWriteScreen()
+        text.typeText(" edited")
+        app.swipeAlongTheStrip(.towardTheLeftEnd)
+        assertShown(AccessibilityID.notes, in: app)
+        XCTAssertFalse(app.saveSheet.exists, "a saved note saves with no sheet")
+        XCTAssertTrue(waitForRows(2, in: app, first: "First edited")[1].contains("Second"))
+
+        rows(in: app).element(boundBy: 1).tap()
+        app.waitForWriteScreen()
+        app.swipeAlongTheStrip(.towardTheLeftEnd)
+        assertShown(AccessibilityID.notes, in: app)
+        XCTAssertFalse(app.saveSheet.exists)
+        XCTAssertTrue(waitForRows(2, in: app, first: "First edited")[1].contains("Second"), "the order is unchanged")
+    }
+
+    /// From write, types `note`, swipes toward notes and saves it through the sheet, typing `title` and Return when
+    /// given, or tapping save to leave it untitled. Ends on notes.
+    @MainActor private func saveANote(_ note: String, titled title: String? = nil, in app: XCUIApplication) {
         app.textViews[AccessibilityID.writeText].typeText(note)
         app.swipeAlongTheStrip(.towardTheLeftEnd)
-        app.saveThroughTheSheet()
+        if let title {
+            XCTAssertTrue(app.saveSheet.waitForExistence(timeout: 5))
+            app.textFields[AccessibilityID.saveTitle].typeText(title + "\n")
+        } else {
+            app.saveThroughTheSheet()
+        }
         assertShown(AccessibilityID.notes, in: app)
+    }
+
+    @MainActor private func backToWrite(_ app: XCUIApplication) {
+        app.swipeAlongTheStrip(.towardTheRightEnd)
+        app.waitForWriteScreen()
+    }
+
+    /// Waits until the list shows `count` rows, the first holding `first` when given, and returns their labels.
+    @MainActor private func waitForRows(
+        _ count: Int, in app: XCUIApplication, first: String? = nil, file: StaticString = #filePath, line: UInt = #line
+    ) -> [String] {
+        let rows = rows(in: app)
+        let settled = XCTNSPredicateExpectation(
+            predicate: NSPredicate { _, _ in
+                rows.count == count && first.map { rows.firstMatch.label.contains($0) } != false
+            }, object: nil)
+        if XCTWaiter.wait(for: [settled], timeout: 10) != .completed {
+            XCTFail(
+                "the list never showed \(count) rows: \(rows.allElementsBoundByIndex.map(\.label))", file: file,
+                line: line)
+        }
+        return rows.allElementsBoundByIndex.map(\.label)
     }
 
     /// Drags from `from` to `to` of the screen's width, toward notes, high enough to stay clear of the keyboard.

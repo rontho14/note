@@ -11,6 +11,7 @@ public struct ScreenStrip: View {
     private let onKeyboardUp: () -> Void
     @State private var writeModel: WriteModel
     @State private var notesModel: NotesModel
+    @State private var drawersModel: DrawersModel
     @State private var position: Position? = .write
     /// The screen the strip rests on. `position` follows the scroll as it moves, so a drag from write that springs
     /// back passes through notes; this changes only once the strip stops.
@@ -20,13 +21,14 @@ public struct ScreenStrip: View {
     public init(storage: any NoteStorage, onKeyboardUp: @escaping () -> Void) {
         _writeModel = State(initialValue: WriteModel(storage: storage))
         _notesModel = State(initialValue: NotesModel(storage: storage))
+        _drawersModel = State(initialValue: DrawersModel(storage: storage))
         self.onKeyboardUp = onKeyboardUp
     }
 
     public var body: some View {
         ScrollView(.horizontal) {
             HStack(spacing: 0) {
-                DrawersScreen()
+                DrawersScreen(model: drawersModel)
                     .containerRelativeFrame(.horizontal)
                     .id(Position.drawers)
                 NotesScreen(model: notesModel, onOpen: open)
@@ -34,7 +36,7 @@ public struct ScreenStrip: View {
                     .id(Position.notes)
                 WriteScreen(
                     model: writeModel, isShown: restingPosition == .write, onKeyboardUp: onKeyboardUp,
-                    onSwipeTowardNotes: swipeTowardNotes
+                    onSwipeTowardNotes: swipeTowardNotes, onLeftOnSaved: notesModel.showSaved
                 )
                 .containerRelativeFrame(.horizontal)
                 .id(Position.write)

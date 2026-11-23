@@ -15,4 +15,6 @@ enum Palette {
     static let surface = Color(red: 0xFF / 255, green: 0xFD / 255, blue: 0xF8 / 255)
     /// Note Rome's accent.
     static let accent = Color(red: 0x66 / 255, green: 0x02 / 255, blue: 0x3C / 255)
+    /// The accent at 7%, behind the note just saved in a list.
+    static let justSaved = accent.opacity(0.07)
 }

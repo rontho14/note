@@ -33,7 +33,7 @@ settings  |  drawers  |  notes  |  WRITE  |  VIEW
 
 ## Saving
 
-A quick flick from left to right saves the note and goes to the notes list.
+A swipe from left to right saves the note and goes to the notes list.
 
 - The first time a note is saved, a modal appears first. It has a title field, the list of drawers, a delete button and a save button. Title and drawer are both optional.
 - The modal shows the drawers as chips in the user's order. A plus chip at the end adds a new drawer.

@@ -67,6 +67,41 @@ struct NoteSummariesTests {
         #expect(try await currentSummaries().map(\.preview) == ["listed"])
     }
 
+    @Test func aSummaryCarriesWhetherTheNoteIsADraftOrSavedWithItsTitle() async throws {
+        try await storage.save(Note.sample("draft", modifiedAt: .milliseconds(3)))
+        try await storage.save(Note.sample("untitled", modifiedAt: .milliseconds(2), savedAt: .milliseconds(2)))
+        try await storage.save(
+            Note.sample("titled", modifiedAt: .milliseconds(1), title: "A title", savedAt: .milliseconds(1)))
+
+        let summaries = try await currentSummaries()
+
+        #expect(summaries.map(\.kind) == [.draft, .saved(title: nil), .saved(title: "A title")])
+    }
+
+    @Test func theSavedNoteCountIsTheSavedNotesOutsideTheTrash() async throws {
+        try await storage.save(contentsOf: (1...3).map { Note.sample("saved \($0)", savedAt: .milliseconds(1)) })
+        try await storage.save(Note.sample("draft"))
+        try await storage.save(Note.sample("trashed", savedAt: .milliseconds(1), trashedAt: .milliseconds(2)))
+
+        var counts = storage.savedNoteCounts().makeAsyncIterator()
+
+        #expect(try await counts.next(isolation: #isolation) == 3)
+    }
+
+    @Test func aSaveAndATrashEachSendAFreshSavedNoteCount() async throws {
+        let saved = Note.sample("note", savedAt: .milliseconds(1))
+        var counts = storage.savedNoteCounts().makeAsyncIterator()
+        var values: [Int?] = []
+        values.append(try await counts.next(isolation: #isolation))
+
+        try await storage.save(saved)
+        values.append(try await counts.next(isolation: #isolation))
+        try await storage.save(saved.trashed(now: .milliseconds(2)))
+        values.append(try await counts.next(isolation: #isolation))
+
+        #expect(values == [0, 1, 0])
+    }
+
     private func currentSummaries() async throws -> [NoteSummary] {
         var updates = storage.noteSummaries().makeAsyncIterator()
         let current = try await updates.next(isolation: #isolation)

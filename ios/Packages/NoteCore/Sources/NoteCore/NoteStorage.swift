@@ -13,6 +13,8 @@ public protocol NoteStorage: Sendable {
     func mostRecentUnsavedNote(modifiedAfter cutoff: Date) async throws -> Note?
     /// Every note not in the trash, newest first, then again after every change to the notes.
     func noteSummaries() -> any AsyncSequence<[NoteSummary], any Error>
+    /// How many saved notes are not in the trash, then again after every change.
+    func savedNoteCounts() -> any AsyncSequence<Int, any Error>
 }
 
 extension NoteStorage {

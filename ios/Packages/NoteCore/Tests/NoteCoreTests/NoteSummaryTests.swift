@@ -13,8 +13,16 @@ struct NoteSummaryTests {
         ("Oneverylongwordwithnospaces", "Oneverylongwordwithnospaces"),
     ])
     func thePreviewIsTheFirstWordsOnOneLine(text: String, preview: String) {
-        let summary = NoteSummary(id: NoteID(rawValue: UUID()), textStart: text, modifiedAt: .now)
+        let summary = NoteSummary(
+            id: NoteID(rawValue: UUID()), textStart: text, modifiedAt: .now, kind: .draft)
 
         #expect(summary.preview == preview)
+    }
+
+    @Test func aTitleIsDrawnOnOneLineLikeThePreview() {
+        let summary = NoteSummary(
+            id: NoteID(rawValue: UUID()), textStart: "text", modifiedAt: .now, kind: .saved(title: "\nTitle\r\nnext "))
+
+        #expect(summary.kind == .saved(title: "Title next "))
     }
 }

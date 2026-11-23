@@ -58,4 +58,12 @@ public struct SQLiteNoteStorage: NoteStorage {
             .tracking { db in try NoteSummaryRecord.newestFirst.fetchAll(db).map(\.summary) }
             .values(in: writer)
     }
+
+    public func savedNoteCounts() -> any AsyncSequence<Int, any Error> {
+        ValueObservation
+            .tracking { db in
+                try NoteRecord.filter(!NoteRecord.isDraft && NoteRecord.isOutsideTheTrash).fetchCount(db)
+            }
+            .values(in: writer)
+    }
 }

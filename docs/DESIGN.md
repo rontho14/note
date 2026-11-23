@@ -76,7 +76,7 @@ Old-style figures are on everywhere. Source Serif 4 replaced Newsreader as the t
 | Drawer numeral | Source Serif 4 italic 400 | 14 | `accentText`. Lowercase roman with a period |
 | Count | Source Serif 4 400 | 14 | Second color |
 | Note inside an open drawer | Source Serif 4 500, or italic 400 | 16 / 36 | Same italic rule as the notes list |
-| Title field | Bodoni Moda 500 | 26 | Placeholder is Source Serif 4 italic in the second color |
+| Title field | Bodoni Moda 500 | 26 | Placeholder `Title` in Source Serif 4 italic in the second color |
 | Chip | Source Serif 4 400 | 16 | |
 | Save button | Source Serif 4 500 | 17.5 | |
 | Sheet heading | Bodoni Moda italic 500 | 26 / 34 | |
@@ -139,7 +139,7 @@ The date column says `now` for under a minute ago, `today` for earlier the same 
 
 On first launch the list area shows `No notes yet.` in italic in the second color.
 
-After a save the list opens with the new note at the top, tinted with the accent at 7% for a moment.
+After a save the list shows the saved note tinted with the accent at 7% for `NotesModel.tintDuration`, then the tint fades. A note edited before the swipe is at the top. One saved without an edit keeps its place, and the list scrolls to it if it is off screen.
 
 Holding a note lifts its row as a card and shows a menu with Rename, Move to drawer and Delete, each with its icon. Move to drawer opens a sheet listing the drawers with the current one checked. Rename opens a sheet with the title field and a Save button above the keyboard.
 

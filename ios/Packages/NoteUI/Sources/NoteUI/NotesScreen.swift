@@ -1,7 +1,8 @@
 import NoteCore
 import SwiftUI
 
-/// Every note, newest first, following the store as it changes. Tapping one opens it.
+/// Every note, newest first, following the store as it changes. Tapping one opens it. The note just saved is tinted
+/// for a moment, and the list scrolls to it once its row is there.
 struct NotesScreen: View {
     let model: NotesModel
     let onOpen: (NoteID) -> Void
@@ -27,23 +28,33 @@ struct NotesScreen: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                 .accessibilityIdentifier(AccessibilityID.notesEmpty)
         case let summaries?:
-            TimelineView(.everyMinute) { context in
-                List(summaries) { summary in
-                    Button {
-                        onOpen(summary.id)
-                    } label: {
-                        NoteRow(summary: summary, now: context.date)
-                            .contentShape(Rectangle())
+            ScrollViewReader { list in
+                TimelineView(.everyMinute) { context in
+                    List(summaries) { summary in
+                        Button {
+                            onOpen(summary.id)
+                        } label: {
+                            NoteRow(summary: summary, now: context.date)
+                                .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityIdentifier(AccessibilityID.notesRow(summary.id))
+                        .listRowInsets(
+                            EdgeInsets(top: 0, leading: ListLayout.side, bottom: 0, trailing: ListLayout.side)
+                        )
+                        .listRowBackground(summary.id == model.justSaved ? Palette.justSaved : Color.clear)
+                        .listRowSeparatorTint(Palette.hairline)
                     }
-                    .buttonStyle(.plain)
-                    .accessibilityIdentifier(AccessibilityID.notesRow(summary.id))
-                    .listRowInsets(EdgeInsets(top: 0, leading: ListLayout.side, bottom: 0, trailing: ListLayout.side))
-                    .listRowBackground(Color.clear)
-                    .listRowSeparatorTint(Palette.hairline)
+                    .listStyle(.plain)
+                    .scrollContentBackground(.hidden)
+                    .contentMargins(.top, ListLayout.firstRowTop, for: .scrollContent)
+                    .animation(.easeOut, value: model.justSaved)
                 }
-                .listStyle(.plain)
-                .scrollContentBackground(.hidden)
-                .contentMargins(.top, ListLayout.firstRowTop, for: .scrollContent)
+                .onChange(of: model.justSavedRow) { _, saved in
+                    if let saved {
+                        withAnimation { list.scrollTo(saved) }
+                    }
+                }
             }
         }
     }

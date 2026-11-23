@@ -195,7 +195,7 @@ struct WriteModelTests {
         model.answerSaveSheet(.save(title: "A title"))
         model.answerSaveSheet(.delete)
         #expect(!model.isAskingToSave)
-        try await model.leave(now: .minutes(11))
+        let left = try await model.leave(now: .minutes(11))
 
         let saved = try #require(try await storage.note(id: draft.id))
         #expect(saved.title == "A title")
@@ -203,6 +203,7 @@ struct WriteModelTests {
         #expect(saved.trashedAt == nil)
         #expect(saved.modifiedAt == draft.modifiedAt)
         #expect(model.text.isEmpty)
+        #expect(left == draft.id)
     }
 
     @Test func theSheetsDeleteTrashesTheNoteOnLeavingAndBlanksWrite() async throws {
@@ -211,10 +212,11 @@ struct WriteModelTests {
         let draft = try #require(try await storage.mostRecentUnsavedNote(modifiedAfter: .minutes(0)))
 
         model.answerSaveSheet(.delete)
-        try await model.leave(now: .minutes(11))
+        let left = try await model.leave(now: .minutes(11))
 
         #expect(try await storage.note(id: draft.id)?.trashedAt == .minutes(11))
         #expect(model.text.isEmpty)
+        #expect(left == nil)
     }
 
     @Test func dismissingTheSheetLeavesTheNoteADraftOnWrite() async throws {
@@ -223,7 +225,7 @@ struct WriteModelTests {
 
         model.dismissSaveSheet()
         model.answerSaveSheet(.delete)
-        try await model.leave(now: .minutes(11))
+        _ = try await model.leave(now: .minutes(11))
 
         #expect(model.text == "kept")
         #expect(try await storage.mostRecentUnsavedNote(modifiedAfter: .minutes(0))?.isDraft == true)
@@ -235,13 +237,14 @@ struct WriteModelTests {
         try await model.open(id: saved.id)
 
         type("saved, edited")
-        try await model.leave(now: .minutes(10))
+        let left = try await model.leave(now: .minutes(10))
 
         let stored = try #require(try await storage.note(id: saved.id))
         #expect(stored.text == "saved, edited")
         #expect(stored.savedAt == .minutes(10))
         #expect(!stored.hasUnsavedEdits)
         #expect(model.text.isEmpty)
+        #expect(left == saved.id)
     }
 
     @Test func leavingAnUnchangedSavedNoteStoresNothingAndBlanksWrite() async throws {
@@ -249,16 +252,17 @@ struct WriteModelTests {
         try await storage.save(saved)
         try await model.open(id: saved.id)
 
-        try await model.leave(now: .minutes(10))
+        let left = try await model.leave(now: .minutes(10))
 
         #expect(try await storage.note(id: saved.id)?.savedAt == .minutes(2))
         #expect(model.text.isEmpty)
+        #expect(left == saved.id)
     }
 
     @Test func leavingWhileWriteHoldsUnsavedTextDoesNothing() async throws {
         type("held")
 
-        try await model.leave(now: .minutes(10))
+        _ = try await model.leave(now: .minutes(10))
 
         #expect(model.text == "held")
         #expect(try await storage.mostRecentUnsavedNote(modifiedAfter: .minutes(0)) == nil)
@@ -269,7 +273,7 @@ struct WriteModelTests {
         try await model.storeText(now: .minutes(1))
         type("")
 
-        try await model.leave(now: .minutes(10))
+        _ = try await model.leave(now: .minutes(10))
 
         #expect(try await storage.mostRecentUnsavedNote(modifiedAfter: .minutes(0)) == nil)
     }

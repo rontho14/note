@@ -10,20 +10,23 @@ struct WriteScreen: View {
     private let isShown: Bool
     private let onKeyboardUp: () -> Void
     private let onSwipeTowardNotes: () -> Void
+    private let onLeftOnSaved: (NoteID) -> Void
     @Bindable private var model: WriteModel
     @FocusState private var isEditing: Bool
     @Environment(\.scenePhase) private var scenePhase
 
     /// `isShown` is whether the screen is the one on screen. `onKeyboardUp` runs each time the keyboard finishes
     /// appearing. `onSwipeTowardNotes` runs for VoiceOver's scroll toward notes, which the strip's paging never sees.
+    /// `onLeftOnSaved` gets the saved note write was left on, for the list to show.
     init(
         model: WriteModel, isShown: Bool, onKeyboardUp: @escaping () -> Void,
-        onSwipeTowardNotes: @escaping () -> Void
+        onSwipeTowardNotes: @escaping () -> Void, onLeftOnSaved: @escaping (NoteID) -> Void
     ) {
         self.model = model
         self.isShown = isShown
         self.onKeyboardUp = onKeyboardUp
         self.onSwipeTowardNotes = onSwipeTowardNotes
+        self.onLeftOnSaved = onLeftOnSaved
     }
 
     var body: some View {
@@ -63,7 +66,11 @@ struct WriteScreen: View {
             .onChange(of: isShown) { _, shown in
                 isEditing = shown
                 if !shown {
-                    startNotesChange { try await model.leave(now: .now) }
+                    startNotesChange {
+                        if let saved = try await model.leave(now: .now) {
+                            onLeftOnSaved(saved)
+                        }
+                    }
                 }
             }
             .onChange(of: scenePhase) { _, phase in

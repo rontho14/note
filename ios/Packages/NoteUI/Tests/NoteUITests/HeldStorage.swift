@@ -55,4 +55,8 @@ actor HeldStorage: NoteStorage {
     nonisolated func noteSummaries() -> any AsyncSequence<[NoteSummary], any Error> {
         wrapped.noteSummaries()
     }
+
+    nonisolated func savedNoteCounts() -> any AsyncSequence<Int, any Error> {
+        wrapped.savedNoteCounts()
+    }
 }

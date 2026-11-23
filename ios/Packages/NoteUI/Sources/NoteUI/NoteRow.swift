@@ -2,8 +2,9 @@ import Foundation
 import NoteCore
 import SwiftUI
 
-/// One note in the notes list: its date, its first words, and its label. Every row is the same height, so a long list
-/// doesn't jump as it scrolls. Every note is a draft until notes can be saved.
+/// One note in the notes list: its date, then a draft's ring and first words labeled `DRAFT`, or a saved note's title, or
+/// its first words when untitled, labeled `UNSORTED`. Every row is the same height, so a long list doesn't jump as it
+/// scrolls.
 struct NoteRow: View {
     let summary: NoteSummary
     let now: Date
@@ -15,18 +16,11 @@ struct NoteRow: View {
                 .foregroundStyle(Palette.second)
                 .frame(width: Layout.dateColumn, height: Layout.line, alignment: .leading)
             VStack(alignment: .leading, spacing: 0) {
-                HStack(spacing: Layout.ringGap) {
-                    Circle()
-                        .stroke(Palette.accent, lineWidth: Layout.ringStroke)
-                        .frame(width: Layout.ring, height: Layout.ring)
-                    Text(summary.preview)
-                        .font(Typeface.preview)
-                        .foregroundStyle(Palette.second)
-                        .lineLimit(1)
-                        .truncationMode(.tail)
-                }
-                .frame(height: Layout.line)
-                Text("DRAFT")
+                mainLine
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+                    .frame(height: Layout.line)
+                Text(label)
                     .font(Typeface.label)
                     .tracking(Layout.labelTracking)
                     .foregroundStyle(Palette.second)
@@ -36,6 +30,39 @@ struct NoteRow: View {
         }
         .padding(.vertical, Layout.padding)
         .frame(height: Layout.height)
+    }
+
+    /// A draft's accent ring and first words, a saved note's title in roman ink, or an untitled one's first words, both
+    /// in italic in the second color.
+    @ViewBuilder private var mainLine: some View {
+        switch summary.kind {
+        case .draft:
+            HStack(spacing: Layout.ringGap) {
+                Circle()
+                    .stroke(Palette.accent, lineWidth: Layout.ringStroke)
+                    .frame(width: Layout.ring, height: Layout.ring)
+                preview
+            }
+        case .saved(let title?):
+            Text(title)
+                .font(Typeface.title)
+                .foregroundStyle(Palette.ink)
+        case .saved(nil):
+            preview
+        }
+    }
+
+    private var preview: some View {
+        Text(summary.preview)
+            .font(Typeface.preview)
+            .foregroundStyle(Palette.second)
+    }
+
+    private var label: String {
+        switch summary.kind {
+        case .draft: "DRAFT"
+        case .saved: "UNSORTED"
+        }
     }
 
     /// Days and years as the iPhone counts them where it is, with the Gregorian calendar the month names belong to.

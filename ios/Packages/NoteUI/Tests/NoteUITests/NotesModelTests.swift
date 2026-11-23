@@ -23,12 +23,14 @@ struct NotesModelTests {
         try await waitUntil { model.summaries?.map(\.preview) == [] }
     }
 
-    /// Waits for `condition`, failing after two seconds.
-    private func waitUntil(_ condition: () -> Bool) async throws {
-        let deadline = ContinuousClock.now + .seconds(2)
-        while !condition() {
-            try #require(ContinuousClock.now < deadline, "the model never showed the store's notes")
-            try await Task.sleep(for: .milliseconds(10))
-        }
+    @Test func aSavedNoteIsTintedForTheTintDurationThenNotAtAll() async throws {
+        let model = NotesModel(storage: try NoteDatabase.openInMemory())
+        let id = NoteID(rawValue: UUID())
+
+        model.showSaved(id)
+
+        #expect(model.justSaved == id)
+        try await Task.sleep(for: NotesModel.tintDuration + .milliseconds(200))
+        #expect(model.justSaved == nil)
     }
 }
