@@ -3,8 +3,12 @@ import Testing
 @testable import NoteTelemetry
 
 struct EventLineTests {
-    @Test func aLineIsTheEventFollowedByItsFields() {
-        #expect(Telemetry.line(.appLaunched, [.durationMs(412)]) == "app.launched note.op.duration_ms=412")
+    @Test(arguments: [
+        (Event.appLaunched, "app.launched note.op.duration_ms=412"),
+        (Event.noteSaved, "note.saved note.op.duration_ms=412"),
+    ])
+    func aLineIsTheEventFollowedByItsFields(event: Event, line: String) {
+        #expect(Telemetry.line(event, [.durationMs(412)]) == line)
     }
 
     @Test func anEventWithoutFieldsIsItsNameAlone() {

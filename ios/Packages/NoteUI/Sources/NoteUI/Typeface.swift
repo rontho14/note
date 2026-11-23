@@ -16,6 +16,12 @@ enum Typeface {
     static let date = Font(font("SourceSerif4-Roman", size: 13))
     /// Source Serif 4 at weight 600, 10.5 points: the drawer label under a note in a list.
     static let label = Font(font("SourceSerif4-Roman", weight: 600, size: 10.5))
+    /// Bodoni Moda at weight 500, 26 points: the save sheet's title field.
+    static let titleField = Font(font("BodoniModa-Roman", weight: 500, size: 26))
+    /// Source Serif 4 italic at weight 400, 26 points: the title field's placeholder.
+    static let titlePlaceholder = Font(font("SourceSerif4-Italic", size: 26))
+    /// Source Serif 4 at weight 500, 17.5 points: the save sheet's save button.
+    static let saveButton = Font(font("SourceSerif4-Roman", weight: 500, size: 17.5))
 
     private static let writeFont = font("SourceSerif4-Italic", size: 17.5)
 

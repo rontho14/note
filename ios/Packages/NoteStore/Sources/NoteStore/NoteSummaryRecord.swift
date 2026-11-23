@@ -16,6 +16,7 @@ struct NoteSummaryRecord: Decodable, FetchableRecord {
     static let newestFirst: SQLRequest<NoteSummaryRecord> = """
         SELECT id, substr(ltrim(text, \(whitespace)), 1, \(NoteSummary.textStartLength)) AS textStart, modifiedAt
         FROM note
+        WHERE \(NoteRecord.isOutsideTheTrash)
         ORDER BY \(NoteRecord.newestFirstOrder)
         """
 

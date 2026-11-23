@@ -60,6 +60,13 @@ struct NoteSummariesTests {
         #expect(previews == [[], ["written"], ["edited"], []])
     }
 
+    @Test func aNoteInTheTrashIsNotListed() async throws {
+        try await storage.save(Note.sample("listed"))
+        try await storage.save(Note.sample("trashed", savedAt: .milliseconds(1), trashedAt: .milliseconds(2)))
+
+        #expect(try await currentSummaries().map(\.preview) == ["listed"])
+    }
+
     private func currentSummaries() async throws -> [NoteSummary] {
         var updates = storage.noteSummaries().makeAsyncIterator()
         let current = try await updates.next(isolation: #isolation)

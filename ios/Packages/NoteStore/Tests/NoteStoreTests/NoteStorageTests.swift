@@ -40,6 +40,32 @@ struct NoteStorageTests {
         #expect(stored.modifiedAt == .milliseconds(5_000))
     }
 
+    @Test func theTitleAndWhenTheNoteWasSavedAndTrashedReadBackExactly() async throws {
+        let title = "  Title 👩🏽‍💻 e\u{301}\r\n"
+        let note = Note.sample(
+            "text", title: title, savedAt: .milliseconds(1_234_567), trashedAt: .milliseconds(2_345_678))
+
+        try await storage.save(note)
+        let stored = try #require(try await storage.note(id: note.id))
+
+        #expect(stored.title.map { Array($0.utf8) } == Array(title.utf8))
+        #expect(stored.savedAt == .milliseconds(1_234_567))
+        #expect(stored.trashedAt == .milliseconds(2_345_678))
+    }
+
+    @Test func savingAgainReplacesTheTitleAndWhenTheNoteWasSavedAndTrashed() async throws {
+        let id = NoteID(rawValue: UUID())
+        try await storage.save(
+            Note.sample("text", id: id, title: "Old", savedAt: .milliseconds(1), trashedAt: .milliseconds(2)))
+
+        try await storage.save(Note.sample("text", id: id, savedAt: .milliseconds(3)))
+        let stored = try #require(try await storage.note(id: id))
+
+        #expect(stored.title == nil)
+        #expect(stored.savedAt == .milliseconds(3))
+        #expect(stored.trashedAt == nil)
+    }
+
     @Test func anUnknownIDHasNoNote() async throws {
         #expect(try await storage.note(id: NoteID(rawValue: UUID())) == nil)
     }
@@ -97,7 +123,7 @@ struct NoteStorageTests {
             try await storage.save(Note.sample(text, modifiedAt: .milliseconds(Int64(modified))))
         }
 
-        let recent = try await storage.mostRecentNote(modifiedAfter: .milliseconds(1_000))
+        let recent = try await storage.mostRecentUnsavedNote(modifiedAfter: .milliseconds(1_000))
 
         #expect(recent?.text == "newest")
     }
@@ -106,7 +132,33 @@ struct NoteStorageTests {
         try await storage.save(Note.sample("at the cutoff", modifiedAt: .milliseconds(1_000)))
         try await storage.save(Note.sample("before the cutoff", modifiedAt: .milliseconds(999)))
 
-        #expect(try await storage.mostRecentNote(modifiedAfter: .milliseconds(1_000)) == nil)
+        #expect(try await storage.mostRecentUnsavedNote(modifiedAfter: .milliseconds(1_000)) == nil)
+    }
+
+    @Test(arguments: [nil, Date.milliseconds(4_999), Date.milliseconds(5_000), Date.milliseconds(5_001)])
+    func aNoteReopensExactlyWhenItHasUnsavedEdits(savedAt: Date?) async throws {
+        let note = Note.sample("note", modifiedAt: .milliseconds(5_000), savedAt: savedAt)
+        try await storage.save(note)
+
+        let reopened = try await storage.mostRecentUnsavedNote(modifiedAfter: .milliseconds(1_000))
+
+        #expect((reopened?.id == note.id) == note.hasUnsavedEdits)
+    }
+
+    @Test func aNoteInTheTrashNeverReopens() async throws {
+        try await storage.save(
+            Note.sample("trashed", modifiedAt: .milliseconds(5_000), trashedAt: .milliseconds(5_000)))
+
+        #expect(try await storage.mostRecentUnsavedNote(modifiedAfter: .milliseconds(1_000)) == nil)
+    }
+
+    @Test func theNewestNoteWithUnsavedEditsReopensOverANewerSavedOne() async throws {
+        try await storage.save(
+            Note.sample("just saved", modifiedAt: .milliseconds(6_000), savedAt: .milliseconds(6_000)))
+        let edited = Note.sample("edited", modifiedAt: .milliseconds(5_000), savedAt: .milliseconds(4_000))
+        try await storage.save(edited)
+
+        #expect(try await storage.mostRecentUnsavedNote(modifiedAfter: .milliseconds(1_000))?.id == edited.id)
     }
 
     @Test func ofTwoNotesModifiedAtOnceTheMostRecentIsTheOneTheListShowsFirst() async throws {
@@ -115,7 +167,7 @@ struct NoteStorageTests {
         try await storage.save(Note.sample("first", id: NoteID(rawValue: first), modifiedAt: .milliseconds(2_000)))
         try await storage.save(Note.sample("second", id: NoteID(rawValue: second), modifiedAt: .milliseconds(2_000)))
 
-        let recent = try await storage.mostRecentNote(modifiedAfter: .milliseconds(1_000))
+        let recent = try await storage.mostRecentUnsavedNote(modifiedAfter: .milliseconds(1_000))
         var summaries = storage.noteSummaries().makeAsyncIterator()
         let listed = try await summaries.next(isolation: #isolation)
 

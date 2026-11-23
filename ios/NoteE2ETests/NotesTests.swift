@@ -15,10 +15,11 @@ nonisolated final class NotesTests: XCTestCase {
         app.waitForWriteScreen()
         text.typeText("First note")
         app.swipeAlongTheStrip(.towardTheLeftEnd)
+        app.saveThroughTheSheet()
         assertRows(["First note"], in: app)
         attachScreenshot(of: app, named: AccessibilityID.notes)
 
-        app.swipeAlongTheStrip(.towardTheRightEnd)
+        rows(in: app).firstMatch.tap()
         app.waitForWriteScreen()
         text.typeText(", and more")
         app.swipeAlongTheStrip(.towardTheLeftEnd)
@@ -39,11 +40,8 @@ nonisolated final class NotesTests: XCTestCase {
 
         text.typeText("Edited. ")
         app.swipeAlongTheStrip(.towardTheLeftEnd)
+        app.saveThroughTheSheet()
         assertRows(["Edited. Seeded 1", "Seeded 0", "Seeded 2, line 1"], in: app)
-    }
-
-    @MainActor private func rows(in app: XCUIApplication) -> XCUIElementQuery {
-        app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", AccessibilityID.notesRowPrefix))
     }
 
     /// Fails unless the list settles on one row per entry, in order, each row showing its entry's text.

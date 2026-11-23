@@ -4,7 +4,7 @@ import XCTest
 
 nonisolated final class LaunchTests: XCTestCase {
     /// Longer than the write screen waits after the last keystroke before it saves.
-    private let saveWait = DraftSaving.delay / .seconds(1) + 1
+    private let saveWait = Autosave.delay / .seconds(1) + 1
 
     @MainActor func testLaunchOpensABlankNoteThatKeepsWhatIsTyped() {
         let app = XCUIApplication()

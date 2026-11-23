@@ -12,6 +12,11 @@ enum Telemetry {
             Telemetry.event(op.completed, .durationMs(Int(duration / .milliseconds(1))))
             return duration
         }
+
+        /// Ends the interval without its completion event, for an operation that failed.
+        consuming func abandon() {
+            signposter.endInterval(op.name, state)
+        }
     }
 
     private static let subsystem = "com.rontho14.note"

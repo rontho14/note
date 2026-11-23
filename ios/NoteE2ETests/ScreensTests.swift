@@ -1,3 +1,4 @@
+import NoteCore
 import NoteUI
 import XCTest
 
@@ -39,24 +40,18 @@ nonisolated final class ScreensTests: XCTestCase {
         start.press(forDuration: 0, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.25, dy: 0.1)))
 
         assertShown(AccessibilityID.write, in: app)
+        XCTAssertFalse(app.saveSheet.exists, "a drift that paging springs back doesn't ask to save")
     }
 
-    @MainActor func testTextLeftOnWriteIsSavedAtOnceAndWaitsThereWithItsCaret() {
+    @MainActor func testADraftLeftOnWriteReopensThereAtTheNextLaunch() {
         let app = XCUIApplication()
         let text = app.textViews[AccessibilityID.writeText]
         app.launchWithNoNotes()
 
         text.typeText("Kept")
-        app.swipeAlongTheStrip(.towardTheLeftEnd)
-        assertShown(AccessibilityID.notes, in: app)
-        app.swipeAlongTheStrip(.towardTheRightEnd)
-        app.waitForWriteScreen()
-        text.typeText("!")
-        XCTAssertEqual(text.value as? String, "Kept!", "the text waits on write with the caret at its end")
-
-        app.swipeAlongTheStrip(.towardTheLeftEnd)
+        sleep(UInt32(Autosave.delay / .seconds(1) + 1))
         app.relaunch()
 
-        XCTAssertEqual(text.value as? String, "Kept!", "leaving write saved the text without waiting for a pause")
+        XCTAssertEqual(text.value as? String, "Kept")
     }
 }

@@ -33,6 +33,7 @@ struct NotesScreen: View {
                         onOpen(summary.id)
                     } label: {
                         NoteRow(summary: summary, now: context.date)
+                            .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
                     .accessibilityIdentifier(AccessibilityID.notesRow(summary.id))

@@ -16,5 +16,12 @@ let migrator: DatabaseMigrator = {
         }
         try db.create(indexOn: "note", columns: ["modifiedAt"])
     }
+    migrator.registerMigration("v3") { db in
+        try db.alter(table: "note") { table in
+            table.add(column: "title", .text)
+            table.add(column: "savedAt", .text)
+            table.add(column: "trashedAt", .text)
+        }
+    }
     return migrator
 }()

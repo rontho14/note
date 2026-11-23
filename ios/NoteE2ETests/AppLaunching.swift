@@ -49,9 +49,28 @@ extension XCUIApplication {
         coordinate(withNormalizedOffset: CGVector(dx: from, dy: 0.3))
             .press(forDuration: 0, thenDragTo: coordinate(withNormalizedOffset: CGVector(dx: to, dy: 0.3)))
     }
+
+    /// The save sheet, which exists only while it is up.
+    @MainActor var saveSheet: XCUIElement {
+        descendants(matching: .any)[AccessibilityID.save]
+    }
+
+    /// Waits for the save sheet, taps its save button, leaving the title as it is, and waits for the sheet and its
+    /// keyboard to go.
+    @MainActor func saveThroughTheSheet(file: StaticString = #filePath, line: UInt = #line) {
+        XCTAssertTrue(saveSheet.waitForExistence(timeout: 5), "the save sheet came up", file: file, line: line)
+        buttons[AccessibilityID.saveConfirm].tap()
+        XCTAssertTrue(saveSheet.waitForNonExistence(timeout: 5), "the save sheet went", file: file, line: line)
+        XCTAssertTrue(keyboards.firstMatch.waitForNonExistence(timeout: 5), "its keyboard went", file: file, line: line)
+    }
 }
 
 extension XCTestCase {
+    /// The notes list's rows, top first.
+    @MainActor func rows(in app: XCUIApplication) -> XCUIElementQuery {
+        app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", AccessibilityID.notesRowPrefix))
+    }
+
     /// Fails unless the screen identified by `screen` settles inside the window. The screens beside it lie outside.
     @MainActor func assertShown(
         _ screen: String, in app: XCUIApplication, file: StaticString = #filePath, line: UInt = #line

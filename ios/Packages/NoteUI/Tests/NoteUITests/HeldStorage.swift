@@ -48,8 +48,8 @@ actor HeldStorage: NoteStorage {
         try await wrapped.deletePermanently(id: id)
     }
 
-    func mostRecentNote(modifiedAfter cutoff: Date) async throws -> Note? {
-        try await wrapped.mostRecentNote(modifiedAfter: cutoff)
+    func mostRecentUnsavedNote(modifiedAfter cutoff: Date) async throws -> Note? {
+        try await wrapped.mostRecentUnsavedNote(modifiedAfter: cutoff)
     }
 
     nonisolated func noteSummaries() -> any AsyncSequence<[NoteSummary], any Error> {

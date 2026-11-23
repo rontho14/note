@@ -3,21 +3,27 @@ import SwiftUI
 import UIKit
 
 /// The note being written and nothing else: the editor fills the paper, and the keyboard comes up at launch, on the
-/// recent draft or on a blank note, and whenever the screen is shown again. What is typed is saved `DraftSaving.delay`
-/// after the last keystroke, and at once when the screen is left or the app goes to the background.
+/// recent unsaved note or on a blank note, and whenever the screen is shown again. What is typed is stored
+/// `Autosave.delay` after the last keystroke, and when the app goes to the background. Leaving the screen saves a saved
+/// note straight.
 struct WriteScreen: View {
     private let isShown: Bool
     private let onKeyboardUp: () -> Void
+    private let onSwipeTowardNotes: () -> Void
     @Bindable private var model: WriteModel
     @FocusState private var isEditing: Bool
     @Environment(\.scenePhase) private var scenePhase
 
     /// `isShown` is whether the screen is the one on screen. `onKeyboardUp` runs each time the keyboard finishes
-    /// appearing.
-    init(model: WriteModel, isShown: Bool, onKeyboardUp: @escaping () -> Void) {
+    /// appearing. `onSwipeTowardNotes` runs for VoiceOver's scroll toward notes, which the strip's paging never sees.
+    init(
+        model: WriteModel, isShown: Bool, onKeyboardUp: @escaping () -> Void,
+        onSwipeTowardNotes: @escaping () -> Void
+    ) {
         self.model = model
         self.isShown = isShown
         self.onKeyboardUp = onKeyboardUp
+        self.onSwipeTowardNotes = onSwipeTowardNotes
     }
 
     var body: some View {
@@ -34,28 +40,36 @@ struct WriteScreen: View {
             .ignoresSafeArea(.container, edges: .top)
             .accessibilityElement(children: .contain)
             .accessibilityIdentifier(AccessibilityID.write)
+            .accessibilityScrollAction { edge in
+                if edge == .leading {
+                    onSwipeTowardNotes()
+                }
+            }
             .task {
-                await stoppingTheAppOnFailure { try await model.loadRecentDraft(now: .now) }
+                await stoppingTheAppOnFailure { try await model.loadRecentUnsavedNote(now: .now) }
                 isEditing = isShown
             }
             .task(id: model.text) {
                 do {
-                    try await Task.sleep(for: DraftSaving.delay)
+                    try await Task.sleep(for: Autosave.delay)
                 } catch {
                     return  // A keystroke cancelled the wait and started a new one.
                 }
-                await stoppingTheAppOnFailure { try await model.saveDraft(now: .now) }
+                await stoppingTheAppOnFailure { try await model.storeText(now: .now) }
+            }
+            .onChange(of: model.isAskingToSave) { _, asking in
+                isEditing = !asking && isShown
             }
             .onChange(of: isShown) { _, shown in
                 isEditing = shown
                 if !shown {
-                    startNotesChange { try await model.saveDraft(now: .now) }
+                    startNotesChange { try await model.leave(now: .now) }
                 }
             }
             .onChange(of: scenePhase) { _, phase in
                 switch phase {
                 case .background:
-                    startNotesChange { try await model.saveDraft(now: .now) }
+                    startNotesChange { try await model.storeText(now: .now) }
                 case .active:
                     startNotesChange { try await model.returnToForeground(now: .now) }
                 default:

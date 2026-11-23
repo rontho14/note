@@ -9,6 +9,11 @@ public enum AccessibilityID {
     public static let notesRowPrefix = "notes.row."
     public static let drawers = "drawers"
     public static let drawersUnsorted = "drawers.unsorted"
+    public static let save = "save"
+    public static let saveTitle = "save.title"
+    public static let saveDelete = "save.delete"
+    public static let saveConfirm = "save.confirm"
+    public static let saveScrim = "save.scrim"
 
     static func notesRow(_ id: NoteID) -> String {
         notesRowPrefix + id.rawValue.uuidString

@@ -17,10 +17,13 @@ public struct SQLiteNoteStorage: NoteStorage {
             for note in notes {
                 try db.execute(
                     literal: """
-                        INSERT INTO note (id, text, cursor, createdAt, modifiedAt)
-                        VALUES (\(note.id.rawValue), \(note.text), \(note.cursor), \(note.createdAt), \(note.modifiedAt))
+                        INSERT INTO note (id, text, cursor, createdAt, modifiedAt, title, savedAt, trashedAt)
+                        VALUES (
+                            \(note.id.rawValue), \(note.text), \(note.cursor), \(note.createdAt), \(note.modifiedAt),
+                            \(note.title), \(note.savedAt), \(note.trashedAt))
                         ON CONFLICT (id) DO UPDATE
-                        SET text = excluded.text, cursor = excluded.cursor, modifiedAt = excluded.modifiedAt
+                        SET text = excluded.text, cursor = excluded.cursor, modifiedAt = excluded.modifiedAt,
+                            title = excluded.title, savedAt = excluded.savedAt, trashedAt = excluded.trashedAt
                         """
                 )
             }
@@ -33,10 +36,11 @@ public struct SQLiteNoteStorage: NoteStorage {
         }
     }
 
-    public func mostRecentNote(modifiedAfter cutoff: Date) async throws -> Note? {
+    public func mostRecentUnsavedNote(modifiedAfter cutoff: Date) async throws -> Note? {
         try await writer.read { db in
             try NoteRecord
                 .filter(Column("modifiedAt") > cutoff)
+                .filter(NoteRecord.isOutsideTheTrash && NoteRecord.hasUnsavedEdits)
                 .order(literal: NoteRecord.newestFirstOrder)
                 .fetchOne(db)?
                 .note

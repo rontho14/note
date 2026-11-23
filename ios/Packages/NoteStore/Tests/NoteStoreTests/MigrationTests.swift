@@ -56,13 +56,16 @@ struct MigrationTests {
                         ["createdAt", "TEXT", "1", "", "0"],
                         ["modifiedAt", "TEXT", "1", "", "0"],
                         ["cursor", "INTEGER", "1", "0", "0"],
+                        ["title", "TEXT", "0", "", "0"],
+                        ["savedAt", "TEXT", "0", "", "0"],
+                        ["trashedAt", "TEXT", "0", "", "0"],
                     ],
                     indexedColumns: ["modifiedAt"]
                 )
         )
     }
 
-    @Test func aNoteWrittenAtVersionOneReadsBackByteForByteWithTheCursorAtTheStart() async throws {
+    @Test func aNoteWrittenAtVersionOneReadsBackByteForByteAsAnUntitledDraftWithTheCursorAtTheStart() async throws {
         let location = folder.url.appending(path: "notes.sqlite")
         let id = UUID()
         let text = "Emoji 👩🏽‍💻🇧🇷 and combining e\u{301}\r\nCRLF\r\n"
@@ -83,5 +86,8 @@ struct MigrationTests {
         #expect(Array(stored.text.utf8) == Array(text.utf8))
         #expect(stored.cursor == 0)
         #expect(stored.modifiedAt == .milliseconds(2))
+        #expect(stored.isDraft)
+        #expect(stored.title == nil)
+        #expect(stored.trashedAt == nil)
     }
 }

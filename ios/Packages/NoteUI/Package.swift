@@ -15,11 +15,13 @@ let package = Package(
     name: "NoteUI",
     platforms: [.iOS(.v26)],
     products: [.library(name: "NoteUI", targets: ["NoteUI"])],
-    dependencies: [.package(path: "../NoteCore"), .package(path: "../NoteStore")],
+    dependencies: [
+        .package(path: "../NoteCore"), .package(path: "../NoteStore"), .package(path: "../NoteTelemetry"),
+    ],
     targets: [
         .target(
             name: "NoteUI",
-            dependencies: ["NoteCore"],
+            dependencies: ["NoteCore", .product(name: "NoteTelemetry", package: "NoteTelemetry")],
             resources: [.copy("Fonts")],
             swiftSettings: strictSettings + [.defaultIsolation(MainActor.self)]
         ),
