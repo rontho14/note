@@ -48,15 +48,15 @@ Several open-source iOS apps were read before deciding. NetNewsWire keeps its do
 
 The code is split into four local Swift packages and a thin app target.
 
-| Module | Owns | May import |
-|---|---|---|
-| `NoteCore` | Note, drawer and theme types. Trash expiry, draft rules, the shape formatter and search ranking. The `NoteStorage` protocol that describes reading and writing notes. | Foundation only |
-| `NoteStore` | The SQLite implementation of `NoteStorage`: GRDB, migrations and the FTS5 index from [ADR 0004](0004-sqlite-with-grdb-and-fts5-search.md). | `NoteCore`, GRDB |
-| `NoteUI` | SwiftUI screens and their models. | `NoteCore`, `NoteTelemetry`, SwiftUI |
-| `NoteTelemetry` | The only code that writes logs and signposts. Typed `Event`, `Op` and `Field` values, so note text can't reach a log, and the launch and save measurements. | `os` |
-| App target | Starts the launch measurement, opens the database and hands it to `NoteUI`. Nothing else. | All four |
+| Module | Owns |
+|---|---|
+| `NoteCore` | Note, drawer and theme types. Trash expiry, draft rules, the shape formatter and search ranking. The `NoteStorage` protocol that describes reading and writing notes. |
+| `NoteStore` | The SQLite implementation of `NoteStorage`: GRDB, migrations and the FTS5 index from [ADR 0004](0004-sqlite-with-grdb-and-fts5-search.md). |
+| `NoteUI` | SwiftUI screens and their models. |
+| `NoteTelemetry` | The only code that writes logs and signposts. Typed `Event`, `Op` and `Field` values, so note text can't reach a log, and the launch and save measurements. |
+| App target | Starts the launch measurement, opens the database and hands it to `NoteUI`. Nothing else. |
 
-Dependencies point one way. `NoteStore` and `NoteUI` depend on `NoteCore`, and neither target depends on the other. Only the app target knows both exist. `NoteUI`'s manifest lists `NoteStore` for `NoteUITests` alone, which runs `WriteModel` against the real in-memory store. The `NoteCore` package also has `NoteCoreTesting`, a library of test builders such as `Note.sample` and fixed dates. It depends only on `NoteCore`, and only test targets import it. `NoteTelemetry` depends on no package of ours, and a package adds it as a dependency in the change where it first logs: `NoteUI` did when it began measuring saves through `SaveMeasurement`.
+What each package depends on lives in its `Package.swift`, and the import rules in `scripts/check-imports.sh`, under Checks below. This record doesn't copy either list, because a copy went stale when `NoteUI` began logging. Dependencies point one way. `NoteStore` and `NoteUI` depend on `NoteCore`, and neither target depends on the other. Only the app target knows both exist. `NoteUI`'s manifest lists `NoteStore` for `NoteUITests` alone, which runs `WriteModel` against the real in-memory store. The `NoteCore` package also has `NoteCoreTesting`, a library of test builders such as `Note.sample` and fixed dates. It depends only on `NoteCore`, and only test targets import it. `NoteTelemetry` depends on no package of ours, and a package adds it as a dependency in the change where it first logs: `NoteUI` did when it began measuring saves through `SaveMeasurement`.
 
 `NoteCore` does no input or output. Code that needs the time or a random value receives it as an argument, so tests control it.
 
