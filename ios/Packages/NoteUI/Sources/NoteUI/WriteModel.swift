@@ -108,8 +108,10 @@ final class WriteModel {
     func leave(now: Date) async throws -> NoteID? {
         var saved: NoteID?
         try await enqueue {
-            let answer: SaveSheetAnswer? = if case .answered(let answer) = self.sheet { answer } else { nil }
-            guard let change = LeavingWrite.change(self.screen, over: self.stored, answer: answer, now: now) else {
+            guard
+                case .apply(let change) = LeavingWrite(
+                    self.screen, over: self.stored, answer: self.sheet.answer, now: now)
+            else {
                 return
             }
             try await self.apply(change)
@@ -204,4 +206,9 @@ private enum SaveSheetState: Equatable {
     case hidden
     case asking
     case answered(SaveSheetAnswer)
+
+    /// The answer given, once the sheet is answered.
+    var answer: SaveSheetAnswer? {
+        if case .answered(let answer) = self { answer } else { nil }
+    }
 }
