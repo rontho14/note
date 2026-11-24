@@ -118,6 +118,12 @@ the full guide when they edit mostly the same `Target Files`. No story in the gr
 a migration or a security-sensitive change (authentication, authorization, secrets handling,
 or a new trust boundary), and no other task may need to sit between them in dependency order.
 
+An atom lands in the task of its **first production caller**. A type, method, query, or log
+event that nothing outside tests calls within its own task moves to the task that first calls
+it, even when it sits in a lower layer than the rest of that task. Never split by layer, all
+the data in one task and all the screens in the next: the first task then ships code with no
+caller, which review flags and the later task renames once it learns what the code is for.
+
 The **size guide** marks a task too big to review in one pass: more than about 15 files in
 `Target Files` (tests included; lockfiles and generated files not counted) or about 500
 changed lines. The file count is the main signal; estimate lines roughly from the number of
