@@ -77,18 +77,33 @@ extension XCTestCase {
         app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", AccessibilityID.notesRowPrefix))
     }
 
-    /// Waits until the list shows `count` rows, the first holding `first` when given, and returns their labels.
+    /// Waits until the list shows `count` rows, and returns their labels.
     @MainActor func waitForRows(
-        _ count: Int, in app: XCUIApplication, first: String? = nil, file: StaticString = #filePath, line: UInt = #line
+        _ count: Int, in app: XCUIApplication, file: StaticString = #filePath, line: UInt = #line
+    ) -> [String] {
+        waitForRows(in: app, "\(count) rows", file: file, line: line) { $0.count == count }
+    }
+
+    /// Waits until the list shows `count` rows, the first holding `text`, and returns their labels.
+    @MainActor func waitForRows(
+        _ count: Int, in app: XCUIApplication, firstContaining text: String, file: StaticString = #filePath,
+        line: UInt = #line
+    ) -> [String] {
+        waitForRows(in: app, "\(count) rows, the first holding \(text)", file: file, line: line) { rows in
+            rows.count == count && rows.firstMatch.label.contains(text)
+        }
+    }
+
+    /// Waits until the list's rows meet `settled`, failing with what was `expected`, and returns their labels.
+    @MainActor private func waitForRows(
+        in app: XCUIApplication, _ expected: String, file: StaticString, line: UInt,
+        until settled: @escaping (XCUIElementQuery) -> Bool
     ) -> [String] {
         let rows = rows(in: app)
-        let settled = XCTNSPredicateExpectation(
-            predicate: NSPredicate { _, _ in
-                rows.count == count && first.map { rows.firstMatch.label.contains($0) } != false
-            }, object: nil)
-        if XCTWaiter.wait(for: [settled], timeout: 10) != .completed {
+        let waiting = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in settled(rows) }, object: nil)
+        if XCTWaiter.wait(for: [waiting], timeout: 10) != .completed {
             XCTFail(
-                "the list never showed \(count) rows: \(rows.allElementsBoundByIndex.map(\.label))", file: file,
+                "the list never showed \(expected): \(rows.allElementsBoundByIndex.map(\.label))", file: file,
                 line: line)
         }
         return rows.allElementsBoundByIndex.map(\.label)

@@ -22,11 +22,11 @@ nonisolated final class RenameTests: XCTestCase {
         attachScreenshot(of: app, named: AccessibilityID.rename)
         app.textFields[AccessibilityID.renameTitle].clearAndType("New")
         app.buttons[AccessibilityID.renameConfirm].tap()
-        XCTAssertTrue(waitForRows(2, in: app, first: "New")[0].contains("New"), "the note keeps its place")
+        _ = waitForRows(2, in: app, firstContaining: "New")
 
         rename(row: 0, in: app)
         app.textFields[AccessibilityID.renameTitle].clearAndType("   \n")
-        XCTAssertTrue(waitForRows(2, in: app, first: "Second body")[0].contains("Second body"), "the title is gone")
+        _ = waitForRows(2, in: app, firstContaining: "Second body")
 
         rename(row: 1, in: app)
         app.textFields[AccessibilityID.renameTitle].typeText(" ignored")
@@ -45,8 +45,8 @@ nonisolated final class RenameTests: XCTestCase {
 
         rename(row: 0, in: app)
         app.textFields[AccessibilityID.renameTitle].typeText("Plan\n")
-        let labels = waitForRows(2, in: app, first: "Plan")
-        XCTAssertTrue(labels[0].contains("Plan") && labels[0].contains("DRAFT"), labels[0])
+        let labels = waitForRows(2, in: app, firstContaining: "Plan")
+        XCTAssertTrue(labels[0].contains("DRAFT"), labels[0])
         let heights = Set(rows(in: app).allElementsBoundByIndex.map(\.frame.height))
         XCTAssertEqual(heights.count, 1, "a titled draft's row is as tall as an untitled one's: \(heights)")
         attachScreenshot(of: app, named: "\(AccessibilityID.notes).titledDraft")
@@ -58,8 +58,8 @@ nonisolated final class RenameTests: XCTestCase {
         XCTAssertEqual(app.textFields[AccessibilityID.saveTitle].value as? String, "Plan", "the field holds the title")
         app.saveThroughTheSheet()
 
-        let saved = waitForRows(2, in: app, first: "Plan")[0]
-        XCTAssertTrue(saved.contains("Plan") && saved.contains("UNSORTED"), saved)
+        let saved = waitForRows(2, in: app, firstContaining: "Plan")[0]
+        XCTAssertTrue(saved.contains("UNSORTED"), saved)
     }
 
     /// Holds the row at `index` until its menu shows, taps Rename, and waits for the rename sheet.

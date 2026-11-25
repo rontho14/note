@@ -4,7 +4,7 @@ import Observation
 /// has passed. A later value takes over with a full duration of its own.
 @Observable
 final class FadingValue<Value> {
-    private(set) var value: Value?
+    private(set) var showing = Showing<Value>.hidden
     private let duration: Duration
     private var fading: Task<Void, Never>?
 
@@ -14,7 +14,7 @@ final class FadingValue<Value> {
 
     /// Shows `value`, and clears it after the duration.
     func show(_ value: Value) {
-        self.value = value
+        showing = .shown(value)
         resume()
     }
 
@@ -32,12 +32,20 @@ final class FadingValue<Value> {
             } catch {
                 return  // A later value, a pause or a clear took over.
             }
-            value = nil
+            showing = .hidden
         }
     }
 
     func clear() {
         fading?.cancel()
-        value = nil
+        showing = .hidden
     }
 }
+
+/// A value shown for a while, or nothing shown.
+enum Showing<Value> {
+    case hidden
+    case shown(Value)
+}
+
+extension Showing: Equatable where Value: Equatable {}

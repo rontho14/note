@@ -60,8 +60,8 @@ struct WriteScreen: View {
                 }
                 await stoppingTheAppOnFailure { try await model.storeText(now: .now) }
             }
-            .onChange(of: model.isAskingToSave) { _, asking in
-                isEditing = !asking && isShown
+            .onChange(of: model.saveSheet) { _, sheet in
+                isEditing = sheet == .down && isShown
             }
             .onChange(of: isShown) { _, shown in
                 isEditing = shown

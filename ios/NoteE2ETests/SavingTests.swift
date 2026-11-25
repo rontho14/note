@@ -143,14 +143,15 @@ nonisolated final class SavingTests: XCTestCase {
         app.swipeAlongTheStrip(.towardTheLeftEnd)
         assertShown(AccessibilityID.notes, in: app)
         XCTAssertFalse(app.saveSheet.exists, "a saved note saves with no sheet")
-        XCTAssertTrue(waitForRows(2, in: app, first: "First edited")[1].contains("Second"))
+        XCTAssertTrue(waitForRows(2, in: app, firstContaining: "First edited")[1].contains("Second"))
 
         rows(in: app).element(boundBy: 1).tap()
         app.waitForWriteScreen()
         app.swipeAlongTheStrip(.towardTheLeftEnd)
         assertShown(AccessibilityID.notes, in: app)
         XCTAssertFalse(app.saveSheet.exists)
-        XCTAssertTrue(waitForRows(2, in: app, first: "First edited")[1].contains("Second"), "the order is unchanged")
+        XCTAssertTrue(
+            waitForRows(2, in: app, firstContaining: "First edited")[1].contains("Second"), "the order is unchanged")
     }
 
     /// From write, types `note`, swipes toward notes and saves it through the sheet, typing `title` and Return when

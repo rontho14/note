@@ -20,17 +20,11 @@ final class WriteModel {
     /// Whether write holds text never saved, so a swipe toward notes must ask first. It changes only when the text
     /// turns empty or not, or the note on screen changes, so a view that reads it isn't redrawn on every keystroke.
     private(set) var holdsLeaving = false
-    /// Whether the save sheet is up: raised and not yet answered.
-    var isAskingToSave: Bool {
-        sheet == .asking
-    }
-    /// The title the save sheet's field starts with: the stored draft's title as stored, given when it was renamed in
-    /// the notes list, or nothing.
-    var titleToOffer: String {
-        stored?.title ?? ""
+    /// The save sheet: up while raised and not yet answered, with the title its field starts from, or down.
+    var saveSheet: TitleSheetState {
+        if case .asking(let title) = sheet { .up(title: title) } else { .down }
     }
 
-    private let storage: any NoteStorage
     /// The stored note the text on screen belongs to, as last stored. Nil when the text belongs to no stored note, so
     /// the next store of text that isn't empty creates one.
     private var stored: Note? {
@@ -46,8 +40,7 @@ final class WriteModel {
     /// Every load, store and return waits in it for the change before it.
     private let changes: NoteChanges
 
-    init(storage: any NoteStorage, changes: NoteChanges) {
-        self.storage = storage
+    init(changes: NoteChanges) {
         self.changes = changes
     }
 
@@ -55,25 +48,25 @@ final class WriteModel {
     /// one.
     func loadRecentUnsavedNote(now: Date) async throws {
         try await showIfFound {
-            try await self.storage.mostRecentUnsavedNote(modifiedAfter: Reopening.cutoff(now: now))
+            try await $0.mostRecentUnsavedNote(modifiedAfter: Reopening.cutoff(now: now))
         }
     }
 
     /// Stores the text and caret, or deletes a draft or trashes a saved note once its text is empty, as `TextChange`
     /// decides.
     func storeText(now: Date) async throws {
-        try await changes.run { try await self.writeText(now: now) }
+        try await changes.run { try await self.writeText(now: now, to: $0) }
     }
 
     /// Shows the note `id` with its caret. A note that is gone leaves the screen as it was.
     func open(id: NoteID) async throws {
-        try await showIfFound { try await self.storage.note(id: id) }
+        try await showIfFound { try await $0.note(id: id) }
     }
 
     /// Keeps the note on screen when it was modified inside the reopen window or the save sheet is up for it, and
     /// otherwise starts a blank note. The note stays stored either way.
     func returnToForeground(now: Date) async throws {
-        try await changes.run {
+        try await changes.run { _ in
             guard self.sheet == .hidden, let stored = self.stored,
                 !Reopening.reopens(modifiedAt: stored.modifiedAt, now: now)
             else {
@@ -87,9 +80,9 @@ final class WriteModel {
     /// save sheet.
     func askToSave(now: Date) async throws {
         try await changes.run {
-            try await self.writeText(now: now)
-            if self.stored != nil {
-                self.sheet = .asking
+            try await self.writeText(now: now, to: $0)
+            if let stored = self.stored {
+                self.sheet = .asking(title: stored.titleInTheField)
             }
         }
     }
@@ -97,7 +90,7 @@ final class WriteModel {
     /// Lowers the sheet with its Save or Delete, which leaving write then carries out. Only the first answer of a sheet
     /// counts, so a second tap can't act on a blank write.
     func answerSaveSheet(_ answer: SaveSheetAnswer) {
-        if sheet == .asking {
+        if case .asking = sheet {
             sheet = .answered(answer)
         }
     }
@@ -111,14 +104,14 @@ final class WriteModel {
     /// write was left on, which the list shows: one just saved, or one with nothing new to save. Text never saved is
     /// held on write until the sheet is answered, so it stays as it is.
     func leave(now: Date) async throws -> NoteID? {
-        try await changes.run {
+        try await changes.run { storage in
             guard
                 case .apply(let change) = LeavingWrite(
                     self.screen, over: self.stored, answer: self.sheet.answer, now: now)
             else {
                 return nil
             }
-            try await self.apply(change)
+            try await self.apply(change, to: storage)
             let saved = self.stored.flatMap { $0.isDraft ? nil : $0.id }
             self.show(nil)
             self.sheet = .hidden
@@ -128,9 +121,9 @@ final class WriteModel {
 
     /// Shows the note `fetch` finds with its caret, after every earlier change. Finding none leaves the screen as it
     /// was.
-    private func showIfFound(_ fetch: @escaping () async throws -> Note?) async throws {
-        try await changes.run {
-            guard let note = try await fetch() else {
+    private func showIfFound(_ fetch: @escaping (any NoteStorage) async throws -> Note?) async throws {
+        try await changes.run { storage in
+            guard let note = try await fetch(storage) else {
                 return
             }
             self.show(note)
@@ -144,12 +137,13 @@ final class WriteModel {
         selection = note.map { TextSelection(insertionPoint: $0.cursorIndex) }
     }
 
-    private func writeText(now: Date) async throws {
-        try await apply(TextChange(storing: screen, over: stored, now: now, newID: NoteID(rawValue: UUID())))
+    private func writeText(now: Date, to storage: any NoteStorage) async throws {
+        try await apply(
+            TextChange(storing: screen, over: stored, now: now, newID: NoteID(rawValue: UUID())), to: storage)
     }
 
     /// Carries `change` out against the store and keeps `stored` in step with it.
-    private func apply(_ change: TextChange) async throws {
+    private func apply(_ change: TextChange, to storage: any NoteStorage) async throws {
         switch change {
         case .nothing:
             return
@@ -197,7 +191,9 @@ final class WriteModel {
 /// The save sheet's state over the draft on write.
 private enum SaveSheetState: Equatable {
     case hidden
-    case asking
+    /// Raised over the stored draft, offering `title`: the draft's title as stored, given when it was renamed in the
+    /// notes list, or nothing.
+    case asking(title: String)
     case answered(SaveSheetAnswer)
 
     /// The answer given, once the sheet is answered.

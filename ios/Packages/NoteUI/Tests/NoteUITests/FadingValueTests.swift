@@ -11,9 +11,9 @@ struct FadingValueTests {
 
         fading.show(1)
 
-        #expect(fading.value == 1)
+        #expect(fading.showing == .shown(1))
         try await Task.sleep(for: duration * 1.5)
-        #expect(fading.value == nil)
+        #expect(fading.showing == .hidden)
     }
 
     @Test func aLaterValueTakesOverForAFullDuration() async throws {
@@ -24,9 +24,9 @@ struct FadingValueTests {
         fading.show(2)
         try await Task.sleep(for: duration * 0.6)
 
-        #expect(fading.value == 2)
+        #expect(fading.showing == .shown(2))
         try await Task.sleep(for: duration)
-        #expect(fading.value == nil)
+        #expect(fading.showing == .hidden)
     }
 
     @Test func aPausedValueStaysUntilResumedThenFadesAfterAFullDuration() async throws {
@@ -35,13 +35,13 @@ struct FadingValueTests {
 
         fading.pause()
         try await Task.sleep(for: duration * 1.5)
-        #expect(fading.value == 1)
+        #expect(fading.showing == .shown(1))
 
         fading.resume()
         try await Task.sleep(for: duration * 0.6)
-        #expect(fading.value == 1)
+        #expect(fading.showing == .shown(1))
         try await Task.sleep(for: duration)
-        #expect(fading.value == nil)
+        #expect(fading.showing == .hidden)
     }
 
     @Test func clearingLowersTheValueAtOnce() {
@@ -50,6 +50,6 @@ struct FadingValueTests {
 
         fading.clear()
 
-        #expect(fading.value == nil)
+        #expect(fading.showing == .hidden)
     }
 }

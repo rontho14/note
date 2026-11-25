@@ -16,7 +16,7 @@ struct DrawersScreen: View {
                     .foregroundStyle(Palette.second)
                     .accessibilityIdentifier(AccessibilityID.drawersUnsorted)
                 Spacer(minLength: 0)
-                if let count = model.unsortedCount {
+                if case .read(let count) = model.unsortedCount {
                     Text(count, format: .number)
                         .font(Typeface.count)
                         .foregroundStyle(Palette.second)
@@ -49,11 +49,13 @@ struct DrawersScreen: View {
     /// The trash button, with the bubble over it once a note is restored.
     private var trash: some View {
         VStack(alignment: .trailing, spacing: Layout.bubbleGap) {
-            if let restored = model.restoredBubble {
+            if case .shown(let restored) = model.restoredBubble {
                 RestoredBubble(kind: restored)
             }
             TimelineView(.everyMinuteFromNow) { context in
-                TrashButton(count: model.trash(listedAt: context.date)?.count ?? 0) { isShowingTrash = true }
+                if case .read(let trash) = model.trash(listedAt: context.date) {
+                    TrashButton(count: trash.count) { isShowingTrash = true }
+                }
             }
             .fixedSize()
         }

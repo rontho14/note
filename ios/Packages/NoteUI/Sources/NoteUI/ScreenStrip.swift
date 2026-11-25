@@ -19,10 +19,10 @@ public struct ScreenStrip: View {
 
     /// `onKeyboardUp` runs each time the write screen's keyboard finishes appearing.
     public init(storage: any NoteStorage, onKeyboardUp: @escaping () -> Void) {
-        let changes = NoteChanges()
-        _writeModel = State(initialValue: WriteModel(storage: storage, changes: changes))
-        _notesModel = State(initialValue: NotesModel(storage: storage, changes: changes))
-        _drawersModel = State(initialValue: DrawersModel(storage: storage, changes: changes))
+        let changes = NoteChanges(storage: storage)
+        _writeModel = State(initialValue: WriteModel(changes: changes))
+        _notesModel = State(initialValue: NotesModel(changes: changes))
+        _drawersModel = State(initialValue: DrawersModel(changes: changes))
         self.onKeyboardUp = onKeyboardUp
     }
 
@@ -64,9 +64,9 @@ public struct ScreenStrip: View {
 
     /// The save sheet over the draft on write: its title field, then delete and save.
     @ViewBuilder private var saveSheet: some View {
-        if writeModel.isAskingToSave {
+        if case .up(let title) = writeModel.saveSheet {
             TitleSheet(
-                title: writeModel.titleToOffer, purpose: .save(onDelete: { answerAndLeave(.delete) }),
+                title: title, purpose: .save(onDelete: { answerAndLeave(.delete) }),
                 onSave: { title in answerAndLeave(.save(title: title)) },
                 onDismiss: writeModel.dismissSaveSheet)
         }
@@ -74,10 +74,10 @@ public struct ScreenStrip: View {
 
     /// The rename sheet for the note held on notes.
     @ViewBuilder private var renameSheet: some View {
-        if case .up(let renaming) = notesModel.renameSheet {
+        if case .up(let stored) = notesModel.renameSheet {
             TitleSheet(
-                title: renaming.title, purpose: .rename,
-                onSave: { title in startNotesChange { try await notesModel.finishRenaming(renaming, typed: title) } },
+                title: stored, purpose: .rename,
+                onSave: { title in startNotesChange { try await notesModel.finishRenaming(typed: title) } },
                 onDismiss: notesModel.stopRenaming)
         }
     }

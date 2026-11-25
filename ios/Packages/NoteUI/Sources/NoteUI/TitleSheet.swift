@@ -1,3 +1,4 @@
+import NoteCore
 import SwiftUI
 
 /// A sheet over DESIGN.md's scrim with a title field, focused as it rises, and a row with Save taking the width Delete
@@ -161,4 +162,17 @@ private enum Layout {
     static let button: CGFloat = 52
     static let icon: CGFloat = 24
     static let height = side + fieldHeight + rowTop + button + bottom
+}
+
+/// A title sheet as a model hands it to the strip: down, or up with the text its field starts from.
+enum TitleSheetState: Equatable {
+    case down
+    case up(title: String)
+}
+
+extension Note {
+    /// The text a title sheet's field starts from for the note: its title as stored, or nothing when it has none.
+    var titleInTheField: String {
+        title ?? ""
+    }
 }

@@ -24,3 +24,4 @@
 - 2026-11-24: Updated [0005](0005-app-structure-and-enforced-boundaries.md). Deleting from the notes list is a single-column update that waits behind leaving write's store, and Undo is another.
 - 2026-11-25: Updated [0005](0005-app-structure-and-enforced-boundaries.md). `TrashExpiry` owns the trash's 30 days, the drawers screen purges each time the app becomes active, and `DrawersModel` follows the trash beside `Unsorted`'s count.
 - 2026-11-25: Updated [0005](0005-app-structure-and-enforced-boundaries.md). Renaming from the list is a single-column update, and the rename sheet is a `TitleSheet` drawn above the strip like the save sheet. A renamed draft shows its title in the list and offers it on its first save.
+- 2026-11-25: Updated [0005](0005-app-structure-and-enforced-boundaries.md). `NoteChanges` holds the store, so every change to the notes goes through its queue by construction.

@@ -1,10 +1,12 @@
 import SwiftUI
 
 /// The dark pill a delete from the list shows: `In the trash`, and an underlined `Undo`. VoiceOver announces it as it
-/// appears, and `onFocusChange` reports VoiceOver's focus coming to it and leaving, so it can stay while it is read.
+/// appears, and `onReadStart` and `onReadEnd` report VoiceOver's focus coming to it and leaving, so it can stay while it
+/// is read.
 struct UndoPill: View {
     let onUndo: () -> Void
-    let onFocusChange: (Bool) -> Void
+    let onReadStart: () -> Void
+    let onReadEnd: () -> Void
     @AccessibilityFocusState private var isFocused: Bool
 
     var body: some View {
@@ -27,7 +29,13 @@ struct UndoPill: View {
         .transition(.opacity)
         .accessibilityElement(children: .contain)
         .accessibilityFocused($isFocused)
-        .onChange(of: isFocused) { _, focused in onFocusChange(focused) }
+        .onChange(of: isFocused) { _, focused in
+            if focused {
+                onReadStart()
+            } else {
+                onReadEnd()
+            }
+        }
         .onAppear { AccessibilityNotification.Announcement("In the trash").post() }
     }
 }

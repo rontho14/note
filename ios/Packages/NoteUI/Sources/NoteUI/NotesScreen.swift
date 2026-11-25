@@ -14,10 +14,10 @@ struct NotesScreen: View {
         list
             .ignoresSafeArea(.container, edges: .top)
             .overlay(alignment: .bottom) {
-                if model.undoable != nil {
+                if case .shown = model.undoable {
                     UndoPill(
                         onUndo: { startNotesChange { try await model.undo() } },
-                        onFocusChange: { model.undoFocusChanged(isFocused: $0) })
+                        onReadStart: model.holdUndo, onReadEnd: model.releaseUndo)
                 }
             }
             .animation(.easeOut, value: model.undoable)
@@ -33,9 +33,9 @@ struct NotesScreen: View {
 
     @ViewBuilder private var list: some View {
         switch model.summaries {
-        case nil:
+        case .reading:
             Color.clear
-        case let summaries? where summaries.isEmpty:
+        case .read(let summaries) where summaries.isEmpty:
             Text("No notes yet.")
                 .font(Typeface.preview)
                 .foregroundStyle(Palette.second)
@@ -43,7 +43,7 @@ struct NotesScreen: View {
                 .padding(.top, ListLayout.firstRowTop)
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                 .accessibilityIdentifier(AccessibilityID.notesEmpty)
-        case let summaries?:
+        case .read(let summaries):
             ScrollViewReader { list in
                 TimelineView(.everyMinute) { context in
                     List(summaries) { summary in
@@ -68,7 +68,7 @@ struct NotesScreen: View {
                         .listRowInsets(
                             EdgeInsets(top: 0, leading: ListLayout.side, bottom: 0, trailing: ListLayout.side)
                         )
-                        .listRowBackground(summary.id == model.justSaved ? Palette.justSaved : Color.clear)
+                        .listRowBackground(model.justSaved == .shown(summary.id) ? Palette.justSaved : Color.clear)
                         .listRowSeparatorTint(Palette.hairline)
                     }
                     .listStyle(.plain)
@@ -77,7 +77,7 @@ struct NotesScreen: View {
                     .animation(.easeOut, value: model.justSaved)
                 }
                 .onChange(of: model.justSavedRow) { _, saved in
-                    if let saved {
+                    if case .shown(let saved) = saved {
                         withAnimation { list.scrollTo(saved) }
                     }
                 }

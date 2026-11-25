@@ -14,7 +14,7 @@ struct WriteModelTests {
 
     init() throws {
         storage = try NoteDatabase.openInMemory()
-        model = WriteModel(storage: storage, changes: NoteChanges())
+        model = WriteModel(changes: NoteChanges(storage: storage))
     }
 
     @Test func typedTextIsSavedByteForByteWithItsCursor() async throws {
@@ -114,7 +114,7 @@ struct WriteModelTests {
 
     @Test func aReturnWaitsForTheSaveInFlightSoTheDraftStaysStored() async throws {
         let held = HeldStorage(storage)
-        let model = WriteModel(storage: held, changes: NoteChanges())
+        let model = WriteModel(changes: NoteChanges(storage: held))
         model.text = "kept"
         try await model.storeText(now: .minutes(10))
         let draft = try #require(try await storage.mostRecentUnsavedNote(modifiedAfter: .minutes(0)))
@@ -183,21 +183,25 @@ struct WriteModelTests {
 
         try await model.askToSave(now: .minutes(10))
 
-        #expect(model.isAskingToSave)
+        #expect(model.saveSheet == .up(title: ""))
         #expect(try await storage.mostRecentUnsavedNote(modifiedAfter: .minutes(0))?.text == "typed just now")
     }
 
     @Test func theSheetOffersARenamedDraftsTitleAsStoredAndNothingForAnUntitledOne() async throws {
         type("untitled")
         try await model.askToSave(now: .minutes(10))
-        #expect(model.titleToOffer == "")
+        #expect(model.saveSheet == .up(title: ""))
         model.dismissSaveSheet()
 
         let renamed = Note.sample("renamed", modifiedAt: .minutes(1), title: "Two\nlines e\u{301}")
         try await storage.save(renamed)
         try await model.open(id: renamed.id)
         try await model.askToSave(now: .minutes(11))
-        #expect(model.titleToOffer == "Two\nlines e\u{301}")
+        guard case .up(let title) = model.saveSheet else {
+            Issue.record("the save sheet rose")
+            return
+        }
+        #expect(Array(title.utf8) == Array("Two\nlines e\u{301}".utf8))
     }
 
     @Test func theSheetsSaveIsCarriedOutOnLeavingAndOnlyTheFirstAnswerCounts() async throws {
@@ -207,7 +211,7 @@ struct WriteModelTests {
 
         model.answerSaveSheet(.save(title: "A title"))
         model.answerSaveSheet(.delete)
-        #expect(!model.isAskingToSave)
+        #expect(model.saveSheet == .down)
         let left = try await model.leave(now: .minutes(11))
 
         let saved = try #require(try await storage.note(id: draft.id))
@@ -298,7 +302,7 @@ struct WriteModelTests {
         try await model.returnToForeground(now: .minutes(16))
 
         #expect(model.text == "asked")
-        #expect(model.isAskingToSave)
+        #expect(model.saveSheet == .up(title: ""))
     }
 
     private func type(_ text: String, caretAfter prefix: String? = nil) {

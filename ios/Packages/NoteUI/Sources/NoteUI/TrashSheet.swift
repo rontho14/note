@@ -19,7 +19,7 @@ struct TrashSheet: View {
             }
             .padding(.bottom, Layout.headerBottom)
             TimelineView(.everyMinuteFromNow) { context in
-                if let trash = model.trash(listedAt: context.date) {
+                if case .read(let trash) = model.trash(listedAt: context.date) {
                     notes(trash, now: context.date)
                 }
             }

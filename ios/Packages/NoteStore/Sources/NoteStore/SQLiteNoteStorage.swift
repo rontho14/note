@@ -54,15 +54,11 @@ public struct SQLiteNoteStorage: NoteStorage {
     }
 
     public func moveToTrash(id: NoteID, now: Date) async throws {
-        try await writer.write { db in
-            _ = try NoteRecord.filter(key: id.rawValue).updateAll(db, NoteRecord.Columns.trashedAt.set(to: now))
-        }
+        try await update(id, NoteRecord.Columns.trashedAt, to: now)
     }
 
     public func restoreFromTrash(id: NoteID) async throws {
-        try await writer.write { db in
-            _ = try NoteRecord.filter(key: id.rawValue).updateAll(db, NoteRecord.Columns.trashedAt.set(to: nil))
-        }
+        try await update(id, NoteRecord.Columns.trashedAt, to: Date?.none)
     }
 
     public func noteSummaries() -> any AsyncSequence<[NoteSummary], any Error> {
@@ -72,9 +68,7 @@ public struct SQLiteNoteStorage: NoteStorage {
     }
 
     public func rename(id: NoteID, title: String?) async throws {
-        try await writer.write { db in
-            _ = try NoteRecord.filter(key: id.rawValue).updateAll(db, NoteRecord.Columns.title.set(to: title))
-        }
+        try await update(id, NoteRecord.Columns.title, to: title)
     }
 
     public func trashSummaries() -> any AsyncSequence<[TrashedNoteSummary], any Error> {
@@ -95,5 +89,15 @@ public struct SQLiteNoteStorage: NoteStorage {
                 try NoteRecord.filter(!NoteRecord.isDraft && NoteRecord.isOutsideTheTrash).fetchCount(db)
             }
             .values(in: writer)
+    }
+
+    /// A change made from the list: one `UPDATE` of the note `id`'s `column` to `value`, which writes no text, so it can't lose
+    /// a store of the whole note or be lost to one.
+    private func update(
+        _ id: NoteID, _ column: Column, to value: (some DatabaseValueConvertible & Sendable)?
+    ) async throws {
+        try await writer.write { db in
+            _ = try NoteRecord.filter(key: id.rawValue).updateAll(db, column.set(to: value))
+        }
     }
 }

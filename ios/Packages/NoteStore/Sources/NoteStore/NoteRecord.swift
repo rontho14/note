@@ -5,7 +5,7 @@ import NoteCore
 struct NoteRecord: Decodable, FetchableRecord, TableRecord {
     static let databaseTableName = "note"
     /// Newest first, and in id order when two notes were modified at once, so every query agrees on which is newest.
-    static let newestFirstOrder: SQL = "modifiedAt DESC, id"
+    static let newestFirstOrder: SQL = "\(Columns.modifiedAt) DESC, id"
     /// The most recently trashed first, and in id order when two notes went to the trash at once.
     static let mostRecentlyTrashedFirstOrder: SQL = "\(Columns.trashedAt) DESC, id"
     /// The columns queries filter or change by name.
