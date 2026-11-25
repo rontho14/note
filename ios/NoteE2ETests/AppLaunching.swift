@@ -71,6 +71,23 @@ extension XCTestCase {
         app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", AccessibilityID.notesRowPrefix))
     }
 
+    /// Waits until the list shows `count` rows, the first holding `first` when given, and returns their labels.
+    @MainActor func waitForRows(
+        _ count: Int, in app: XCUIApplication, first: String? = nil, file: StaticString = #filePath, line: UInt = #line
+    ) -> [String] {
+        let rows = rows(in: app)
+        let settled = XCTNSPredicateExpectation(
+            predicate: NSPredicate { _, _ in
+                rows.count == count && first.map { rows.firstMatch.label.contains($0) } != false
+            }, object: nil)
+        if XCTWaiter.wait(for: [settled], timeout: 10) != .completed {
+            XCTFail(
+                "the list never showed \(count) rows: \(rows.allElementsBoundByIndex.map(\.label))", file: file,
+                line: line)
+        }
+        return rows.allElementsBoundByIndex.map(\.label)
+    }
+
     /// Fails unless the screen identified by `screen` settles inside the window. The screens beside it lie outside.
     @MainActor func assertShown(
         _ screen: String, in app: XCUIApplication, file: StaticString = #filePath, line: UInt = #line

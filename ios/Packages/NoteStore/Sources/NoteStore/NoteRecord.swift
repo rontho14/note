@@ -6,9 +6,16 @@ struct NoteRecord: Decodable, FetchableRecord, TableRecord {
     static let databaseTableName = "note"
     /// Newest first, and in id order when two notes were modified at once, so every query agrees on which is newest.
     static let newestFirstOrder: SQL = "modifiedAt DESC, id"
-    static let isDraft: SQLExpression = Column("savedAt") == nil
-    static let hasUnsavedEdits: SQLExpression = isDraft || Column("modifiedAt") > Column("savedAt")
-    static let isOutsideTheTrash: SQLExpression = Column("trashedAt") == nil
+    /// The columns queries filter or change by name.
+    enum Columns {
+        static let modifiedAt = Column("modifiedAt")
+        static let savedAt = Column("savedAt")
+        static let trashedAt = Column("trashedAt")
+    }
+
+    static let isDraft: SQLExpression = Columns.savedAt == nil
+    static let hasUnsavedEdits: SQLExpression = isDraft || Columns.modifiedAt > Columns.savedAt
+    static let isOutsideTheTrash: SQLExpression = Columns.trashedAt == nil
 
     let id: UUID
     let text: String

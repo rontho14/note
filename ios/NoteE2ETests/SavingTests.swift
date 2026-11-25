@@ -172,23 +172,6 @@ nonisolated final class SavingTests: XCTestCase {
         app.waitForWriteScreen()
     }
 
-    /// Waits until the list shows `count` rows, the first holding `first` when given, and returns their labels.
-    @MainActor private func waitForRows(
-        _ count: Int, in app: XCUIApplication, first: String? = nil, file: StaticString = #filePath, line: UInt = #line
-    ) -> [String] {
-        let rows = rows(in: app)
-        let settled = XCTNSPredicateExpectation(
-            predicate: NSPredicate { _, _ in
-                rows.count == count && first.map { rows.firstMatch.label.contains($0) } != false
-            }, object: nil)
-        if XCTWaiter.wait(for: [settled], timeout: 10) != .completed {
-            XCTFail(
-                "the list never showed \(count) rows: \(rows.allElementsBoundByIndex.map(\.label))", file: file,
-                line: line)
-        }
-        return rows.allElementsBoundByIndex.map(\.label)
-    }
-
     /// Drags from `from` to `to` of the screen's width, toward notes, high enough to stay clear of the keyboard.
     @MainActor private func dragTowardNotes(
         in app: XCUIApplication, from: CGFloat, to: CGFloat, slowly: Bool = false

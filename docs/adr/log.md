@@ -21,3 +21,4 @@
 - 2026-11-23: Updated [0005](0005-app-structure-and-enforced-boundaries.md). The notes list draws saved and titled rows and tints the note just saved, and the drawers screen counts `Unsorted` through `DrawersModel`.
 - 2026-11-24: Updated [0005](0005-app-structure-and-enforced-boundaries.md). Settled details give the reasons spec 005 recorded for dated saves and trash, leaving from the text on screen, the drawers' own count query and no new launch arguments, so reviews stop reopening them.
 - 2026-11-24: Updated [0005](0005-app-structure-and-enforced-boundaries.md). The module table no longer copies what each module may import; each `Package.swift` and `check-imports.sh` own that.
+- 2026-11-24: Updated [0005](0005-app-structure-and-enforced-boundaries.md). Deleting from the notes list is a single-column update that waits behind leaving write's store, and Undo is another.

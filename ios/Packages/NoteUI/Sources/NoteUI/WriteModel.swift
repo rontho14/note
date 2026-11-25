@@ -38,12 +38,12 @@ final class WriteModel {
     /// The save sheet over the stored draft: hidden, asking, or answered and waiting for leaving write to carry the
     /// answer out. The text can't change while it is up, so the stored draft is the one it was raised for.
     private var sheet = SaveSheetState.hidden
-    /// The last change to the stored note. Every load, store and return waits for the one before it, so a store that
-    /// iOS suspended can't finish over a later change.
-    private var lastChange: Task<Void, any Error>?
+    /// Every load, store and return waits in it for the change before it.
+    private let changes: NoteChanges
 
-    init(storage: any NoteStorage) {
+    init(storage: any NoteStorage, changes: NoteChanges) {
         self.storage = storage
+        self.changes = changes
     }
 
     /// Shows the most recent note with unsaved edits modified inside the reopen window, with its caret, if there is
@@ -57,7 +57,7 @@ final class WriteModel {
     /// Stores the text and caret, or deletes a draft or trashes a saved note once its text is empty, as `TextChange`
     /// decides.
     func storeText(now: Date) async throws {
-        try await enqueue { try await self.writeText(now: now) }.value
+        try await changes.run { try await self.writeText(now: now) }
     }
 
     /// Shows the note `id` with its caret. A note that is gone leaves the screen as it was.
@@ -68,25 +68,25 @@ final class WriteModel {
     /// Keeps the note on screen when it was modified inside the reopen window or the save sheet is up for it, and
     /// otherwise starts a blank note. The note stays stored either way.
     func returnToForeground(now: Date) async throws {
-        try await enqueue {
+        try await changes.run {
             guard self.sheet == .hidden, let stored = self.stored,
                 !Reopening.reopens(modifiedAt: stored.modifiedAt, now: now)
             else {
                 return
             }
             self.show(nil)
-        }.value
+        }
     }
 
     /// Stores the text typed since the last pause, so the sheet always has a stored draft under it, then raises the
     /// save sheet.
     func askToSave(now: Date) async throws {
-        try await enqueue {
+        try await changes.run {
             try await self.writeText(now: now)
             if self.stored != nil {
                 self.sheet = .asking
             }
-        }.value
+        }
     }
 
     /// Lowers the sheet with its Save or Delete, which leaving write then carries out. Only the first answer of a sheet
@@ -107,7 +107,7 @@ final class WriteModel {
     /// held on write until the sheet is answered, so it stays as it is.
     func leave(now: Date) async throws -> NoteID? {
         var saved: NoteID?
-        try await enqueue {
+        try await changes.run {
             guard
                 case .apply(let change) = LeavingWrite(
                     self.screen, over: self.stored, answer: self.sheet.answer, now: now)
@@ -118,19 +118,19 @@ final class WriteModel {
             saved = self.stored.flatMap { $0.isDraft ? nil : $0.id }
             self.show(nil)
             self.sheet = .hidden
-        }.value
+        }
         return saved
     }
 
     /// Shows the note `fetch` finds with its caret, after every earlier change. Finding none leaves the screen as it
     /// was.
     private func showIfFound(_ fetch: @escaping () async throws -> Note?) async throws {
-        try await enqueue {
+        try await changes.run {
             guard let note = try await fetch() else {
                 return
             }
             self.show(note)
-        }.value
+        }
     }
 
     /// Puts `note` on screen with its caret, or a blank note when it is nil.
@@ -138,17 +138,6 @@ final class WriteModel {
         stored = note
         text = note?.text ?? ""
         selection = note.map { TextSelection(insertionPoint: $0.cursorIndex) }
-    }
-
-    /// Starts `change` once every earlier change has finished, whether or not that one failed, and returns its task.
-    private func enqueue(_ change: @escaping () async throws -> Void) -> Task<Void, any Error> {
-        let previous = lastChange
-        let next = Task {
-            _ = await previous?.result
-            try await change()
-        }
-        lastChange = next
-        return next
     }
 
     private func writeText(now: Date) async throws {

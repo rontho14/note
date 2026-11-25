@@ -39,7 +39,7 @@ public struct SQLiteNoteStorage: NoteStorage {
     public func mostRecentUnsavedNote(modifiedAfter cutoff: Date) async throws -> Note? {
         try await writer.read { db in
             try NoteRecord
-                .filter(Column("modifiedAt") > cutoff)
+                .filter(NoteRecord.Columns.modifiedAt > cutoff)
                 .filter(NoteRecord.isOutsideTheTrash && NoteRecord.hasUnsavedEdits)
                 .order(literal: NoteRecord.newestFirstOrder)
                 .fetchOne(db)?
@@ -50,6 +50,18 @@ public struct SQLiteNoteStorage: NoteStorage {
     public func deletePermanently(id: NoteID) async throws {
         try await writer.write { db in
             _ = try NoteRecord.deleteOne(db, key: id.rawValue)
+        }
+    }
+
+    public func moveToTrash(id: NoteID, now: Date) async throws {
+        try await writer.write { db in
+            _ = try NoteRecord.filter(key: id.rawValue).updateAll(db, NoteRecord.Columns.trashedAt.set(to: now))
+        }
+    }
+
+    public func restoreFromTrash(id: NoteID) async throws {
+        try await writer.write { db in
+            _ = try NoteRecord.filter(key: id.rawValue).updateAll(db, NoteRecord.Columns.trashedAt.set(to: nil))
         }
     }
 

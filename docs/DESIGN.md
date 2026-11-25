@@ -141,9 +141,9 @@ On first launch the list area shows `No notes yet.` in italic in the second colo
 
 After a save the list shows the saved note tinted with the accent at 7% for `NotesModel.tintDuration`, then the tint fades. A note edited before the swipe is at the top. One saved without an edit keeps its place, and the list scrolls to it if it is off screen.
 
-Holding a note lifts its row as a card and shows a menu with Rename, Move to drawer and Delete, each with its icon. Move to drawer opens a sheet listing the drawers with the current one checked. Rename opens a sheet with the title field and a Save button above the keyboard.
+Holding a note lifts its row as a card and shows a menu with Rename, Move to drawer and Delete, each with its icon. The menu is the system's context menu, so it draws in the system's type and lift, the one surface that does; Delete is not drawn in red. Move to drawer opens a sheet listing the drawers with the current one checked. Rename opens a sheet with the title field and a Save button above the keyboard.
 
-Deleting a note shows a dark pill above the footer, 52 points tall and fully rounded, saying `In the trash` with an underlined `Undo`.
+Deleting a note shows a dark pill above the footer, 52 points tall and fully rounded, saying `In the trash` with an underlined `Undo`. Until the footer exists it sits 16 points above the bottom of the screen. It stays for `NotesModel.undoDuration`, and for as long as VoiceOver reads it, which announces it as it appears. Leaving the notes screen takes it away, and the note stays in the trash.
 
 ### Search
 

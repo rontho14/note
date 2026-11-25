@@ -10,7 +10,7 @@ import Testing
 struct NotesModelTests {
     @Test func theModelShowsNothingUntilTheStoreAnswersThenFollowsEveryChange() async throws {
         let storage = try NoteDatabase.openInMemory()
-        let model = NotesModel(storage: storage)
+        let model = NotesModel(storage: storage, changes: NoteChanges())
         #expect(model.summaries == nil)
         let following = Task { try await model.follow() }
         defer { following.cancel() }
@@ -23,14 +23,43 @@ struct NotesModelTests {
         try await waitUntil { model.summaries?.map(\.preview) == [] }
     }
 
-    @Test func aSavedNoteIsTintedForTheTintDurationThenNotAtAll() async throws {
-        let model = NotesModel(storage: try NoteDatabase.openInMemory())
-        let id = NoteID(rawValue: UUID())
+    @Test func aNoteDeletedWhileLeavingWriteStoresItGoesToTheTrashAfterThatStore() async throws {
+        let storage = try NoteDatabase.openInMemory()
+        let saved = Note.sample("saved", modifiedAt: .minutes(1), savedAt: .minutes(1))
+        try await storage.save(saved)
+        let held = HeldStorage(storage)
+        let changes = NoteChanges()
+        let write = WriteModel(storage: held, changes: changes)
+        let notes = NotesModel(storage: held, changes: changes)
+        try await write.open(id: saved.id)
+        write.text = "saved, edited"
 
-        model.showSaved(id)
+        await held.holdSaves()
+        let leaving = Task { try await write.leave(now: .minutes(10)) }
+        await held.waitForAHeldSave()
+        let deleting = Task { try await notes.moveToTrash(saved.id, now: .minutes(11)) }
+        await held.releaseSaves()
+        _ = try await leaving.value
+        try await deleting.value
 
-        #expect(model.justSaved == id)
-        try await Task.sleep(for: NotesModel.tintDuration + .milliseconds(200))
-        #expect(model.justSaved == nil)
+        let stored = try #require(try await storage.note(id: saved.id))
+        #expect(stored.text == "saved, edited")
+        #expect(stored.trashedAt == .minutes(11))
+        #expect(notes.undoable == saved.id)
+    }
+
+    @Test func undoTakesTheNoteOutOfTheTrashAndLowersThePill() async throws {
+        let storage = try NoteDatabase.openInMemory()
+        let model = NotesModel(storage: storage, changes: NoteChanges())
+        let note = Note.sample("deleted", modifiedAt: .minutes(1), savedAt: .minutes(1))
+        try await storage.save(note)
+        try await model.moveToTrash(note.id, now: .minutes(2))
+
+        try await model.undo()
+
+        #expect(model.undoable == nil)
+        let restored = try #require(try await storage.note(id: note.id))
+        #expect(restored.trashedAt == nil)
+        #expect(restored.modifiedAt == .minutes(1))
     }
 }

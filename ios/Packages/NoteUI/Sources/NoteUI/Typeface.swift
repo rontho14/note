@@ -27,6 +27,9 @@ enum Typeface {
     /// Source Serif 4 at weight 500, 17.5 points: the save sheet's save button.
     static let saveButton = Font(font("SourceSerif4-Roman", weight: 500, size: 17.5))
 
+    /// Source Serif 4 italic at weight 400, 15.5 points: the words in a message pill or bubble.
+    static let message = Font(font("SourceSerif4-Italic", size: 15.5))
+
     private static let writeFont = font("SourceSerif4-Italic", size: 17.5)
 
     /// The bundled variable font `Fonts/<file>.ttf` at `weight`, with its optical size set to `size`, and old-style

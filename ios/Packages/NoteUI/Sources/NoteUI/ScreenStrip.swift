@@ -19,8 +19,9 @@ public struct ScreenStrip: View {
 
     /// `onKeyboardUp` runs each time the write screen's keyboard finishes appearing.
     public init(storage: any NoteStorage, onKeyboardUp: @escaping () -> Void) {
-        _writeModel = State(initialValue: WriteModel(storage: storage))
-        _notesModel = State(initialValue: NotesModel(storage: storage))
+        let changes = NoteChanges()
+        _writeModel = State(initialValue: WriteModel(storage: storage, changes: changes))
+        _notesModel = State(initialValue: NotesModel(storage: storage, changes: changes))
         _drawersModel = State(initialValue: DrawersModel(storage: storage))
         self.onKeyboardUp = onKeyboardUp
     }
@@ -31,7 +32,7 @@ public struct ScreenStrip: View {
                 DrawersScreen(model: drawersModel)
                     .containerRelativeFrame(.horizontal)
                     .id(Position.drawers)
-                NotesScreen(model: notesModel, onOpen: open)
+                NotesScreen(model: notesModel, isShown: restingPosition == .notes, onOpen: open)
                     .containerRelativeFrame(.horizontal)
                     .id(Position.notes)
                 WriteScreen(

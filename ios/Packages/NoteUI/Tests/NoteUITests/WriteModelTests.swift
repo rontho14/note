@@ -14,7 +14,7 @@ struct WriteModelTests {
 
     init() throws {
         storage = try NoteDatabase.openInMemory()
-        model = WriteModel(storage: storage)
+        model = WriteModel(storage: storage, changes: NoteChanges())
     }
 
     @Test func typedTextIsSavedByteForByteWithItsCursor() async throws {
@@ -114,7 +114,7 @@ struct WriteModelTests {
 
     @Test func aReturnWaitsForTheSaveInFlightSoTheDraftStaysStored() async throws {
         let held = HeldStorage(storage)
-        let model = WriteModel(storage: held)
+        let model = WriteModel(storage: held, changes: NoteChanges())
         model.text = "kept"
         try await model.storeText(now: .minutes(10))
         let draft = try #require(try await storage.mostRecentUnsavedNote(modifiedAfter: .minutes(0)))
