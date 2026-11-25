@@ -167,11 +167,11 @@ On first launch the list holds only `Unsorted`.
 
 ### Trash
 
-The trash is a round button, 52 points across, at the bottom right of the drawers screen. It sits 20 points from the edge and 16 above the footer. It has the surface color, a hairline border, an icon in the second color and a small count.
+The trash is a round button, 52 points across, at the bottom right of the drawers screen. It sits 20 points from the edge and 16 above the footer, or above the bottom of the screen until the footer exists. It has the surface color, a hairline border, an icon in the second color and a small count. An empty trash shows no count.
 
-Tapping it opens a sheet headed `Trash`, with `kept for 30 days` on the right. Each row has the title or preview, the drawer label, the days it has left and the word `Restore` in italic `accentText`. An empty trash shows `Nothing in the trash.` in italic.
+Tapping it opens a sheet headed `Trash`, with `kept for 30 days` on the right. Each row has the title or preview, the drawer label, the days it has left and the word `Restore` in italic `accentText`, the most recently trashed note first. Days left round up and stay between `1 day` and `30 days`, which `TrashExpiry` owns; a note leaves the sheet the moment its 30 days are up. An empty trash shows `Nothing in the trash.` in italic.
 
-Restoring a note shows a small dark bubble just above the trash button, pointing down at it, naming the drawer the note went back to.
+Restoring a note shows a small dark bubble just above the trash button, pointing down at it, naming the drawer the note went back to: `Back in Unsorted`, or `Back as a draft` for a draft, which has no drawer. The bubble sits under the sheet, so it comes once the sheet goes down, for `DrawersModel.restoredDuration`.
 
 A note can be dragged onto the button to delete it. As the note approaches, the button grows to 72 points, fills with the accent and opens its lid.
 

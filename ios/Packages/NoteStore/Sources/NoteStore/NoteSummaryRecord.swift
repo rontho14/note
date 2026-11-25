@@ -13,11 +13,15 @@ struct NoteSummaryRecord: Decodable, FetchableRecord {
     private static let whitespace = String(
         String.UnicodeScalarView((0...0x10FFFF).compactMap(Unicode.Scalar.init).filter(\.properties.isWhitespace)))
 
-    /// The text start begins at the note's first character that isn't whitespace, so a note that opens with a long run
-    /// of blank lines still reads its first words.
+    /// The columns a summary reads. The text start begins at the note's first character that isn't whitespace, so a
+    /// note that opens with a long run of blank lines still reads its first words.
+    static let columns: SQL = """
+        id, substr(ltrim(text, \(whitespace)), 1, \(NoteSummary.textStartLength)) AS textStart, modifiedAt, title,
+            \(NoteRecord.isDraft) AS isDraft
+        """
+
     static let newestFirst: SQLRequest<NoteSummaryRecord> = """
-        SELECT id, substr(ltrim(text, \(whitespace)), 1, \(NoteSummary.textStartLength)) AS textStart, modifiedAt,
-            title, \(NoteRecord.isDraft) AS isDraft
+        SELECT \(columns)
         FROM note
         WHERE \(NoteRecord.isOutsideTheTrash)
         ORDER BY \(NoteRecord.newestFirstOrder)
@@ -27,5 +31,22 @@ struct NoteSummaryRecord: Decodable, FetchableRecord {
         NoteSummary(
             id: NoteID(rawValue: id), textStart: textStart, modifiedAt: modifiedAt,
             kind: isDraft ? .draft : .saved(title: title))
+    }
+}
+
+/// A note in the trash: its summary, and when it went there.
+struct TrashedNoteSummaryRecord: FetchableRecord {
+    let summary: TrashedNoteSummary
+
+    static let mostRecentlyTrashedFirst: SQLRequest<TrashedNoteSummaryRecord> = """
+        SELECT \(NoteSummaryRecord.columns), \(NoteRecord.Columns.trashedAt)
+        FROM note
+        WHERE \(NoteRecord.isInTheTrash)
+        ORDER BY \(NoteRecord.mostRecentlyTrashedFirstOrder)
+        """
+
+    init(row: Row) throws {
+        summary = TrashedNoteSummary(
+            summary: try NoteSummaryRecord(row: row).summary, trashedAt: row[NoteRecord.Columns.trashedAt])
     }
 }

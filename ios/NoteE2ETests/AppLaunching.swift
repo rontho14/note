@@ -14,6 +14,12 @@ extension XCUIApplication {
         launchOnce(with: ["-reset-storage", "-seed-notes", String(count)], file: file, line: line)
     }
 
+    /// Launches the app with its database holding only the notes `-seed-trash` describes, such as `saved:1,draft:29`:
+    /// each saved or a draft, trashed that many days before launch. Waits for the write screen.
+    @MainActor func launchWithTrashSeeded(_ notes: String, file: StaticString = #filePath, line: UInt = #line) {
+        launchOnce(with: ["-reset-storage", "-seed-trash", notes], file: file, line: line)
+    }
+
     /// Launches the app with `arguments` and waits for the write screen. Later launches go without them.
     @MainActor private func launchOnce(with arguments: [String], file: StaticString, line: UInt) {
         launchArguments = arguments

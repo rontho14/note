@@ -71,6 +71,18 @@ public struct SQLiteNoteStorage: NoteStorage {
             .values(in: writer)
     }
 
+    public func trashSummaries() -> any AsyncSequence<[TrashedNoteSummary], any Error> {
+        ValueObservation
+            .tracking { db in try TrashedNoteSummaryRecord.mostRecentlyTrashedFirst.fetchAll(db).map(\.summary) }
+            .values(in: writer)
+    }
+
+    public func purgeTrash(trashedBefore cutoff: Date) async throws {
+        try await writer.write { db in
+            _ = try NoteRecord.filter(NoteRecord.Columns.trashedAt < cutoff).deleteAll(db)
+        }
+    }
+
     public func savedNoteCounts() -> any AsyncSequence<Int, any Error> {
         ValueObservation
             .tracking { db in

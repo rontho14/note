@@ -19,6 +19,10 @@ public protocol NoteStorage: Sendable {
     func noteSummaries() -> any AsyncSequence<[NoteSummary], any Error>
     /// How many saved notes are not in the trash, then again after every change.
     func savedNoteCounts() -> any AsyncSequence<Int, any Error>
+    /// Every note in the trash, the most recently trashed first, then again after every change to the notes.
+    func trashSummaries() -> any AsyncSequence<[TrashedNoteSummary], any Error>
+    /// Deletes for good every note trashed before `cutoff`.
+    func purgeTrash(trashedBefore cutoff: Date) async throws
 }
 
 extension NoteStorage {

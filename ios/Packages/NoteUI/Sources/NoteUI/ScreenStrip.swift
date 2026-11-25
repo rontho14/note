@@ -22,7 +22,7 @@ public struct ScreenStrip: View {
         let changes = NoteChanges()
         _writeModel = State(initialValue: WriteModel(storage: storage, changes: changes))
         _notesModel = State(initialValue: NotesModel(storage: storage, changes: changes))
-        _drawersModel = State(initialValue: DrawersModel(storage: storage))
+        _drawersModel = State(initialValue: DrawersModel(storage: storage, changes: changes))
         self.onKeyboardUp = onKeyboardUp
     }
 

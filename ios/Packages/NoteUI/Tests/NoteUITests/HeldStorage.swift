@@ -64,6 +64,14 @@ actor HeldStorage: NoteStorage {
         wrapped.noteSummaries()
     }
 
+    nonisolated func trashSummaries() -> any AsyncSequence<[TrashedNoteSummary], any Error> {
+        wrapped.trashSummaries()
+    }
+
+    func purgeTrash(trashedBefore cutoff: Date) async throws {
+        try await wrapped.purgeTrash(trashedBefore: cutoff)
+    }
+
     nonisolated func savedNoteCounts() -> any AsyncSequence<Int, any Error> {
         wrapped.savedNoteCounts()
     }

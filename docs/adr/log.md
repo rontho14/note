@@ -22,3 +22,4 @@
 - 2026-11-24: Updated [0005](0005-app-structure-and-enforced-boundaries.md). Settled details give the reasons spec 005 recorded for dated saves and trash, leaving from the text on screen, the drawers' own count query and no new launch arguments, so reviews stop reopening them.
 - 2026-11-24: Updated [0005](0005-app-structure-and-enforced-boundaries.md). The module table no longer copies what each module may import; each `Package.swift` and `check-imports.sh` own that.
 - 2026-11-24: Updated [0005](0005-app-structure-and-enforced-boundaries.md). Deleting from the notes list is a single-column update that waits behind leaving write's store, and Undo is another.
+- 2026-11-25: Updated [0005](0005-app-structure-and-enforced-boundaries.md). `TrashExpiry` owns the trash's 30 days, the drawers screen purges each time the app becomes active, and `DrawersModel` follows the trash beside `Unsorted`'s count.
