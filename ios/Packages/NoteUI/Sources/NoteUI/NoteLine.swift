@@ -1,8 +1,8 @@
 import NoteCore
 import SwiftUI
 
-/// A note on one line as every list draws it, with its drawer label under it: a draft's ring and first words labeled
-/// `DRAFT`, or a saved note's title, or its first words when untitled, labeled `UNSORTED`.
+/// A note on one line as every list draws it, with its drawer label under it: its title, or its first words when
+/// untitled, after a ring for a draft labeled `DRAFT`, or alone for a saved note labeled `UNSORTED`.
 struct NoteLine: View {
     let summary: NoteSummary
 
@@ -26,30 +26,25 @@ struct NoteLine: View {
     /// The note's height, its main line and label.
     static let height = Layout.line + Layout.labelLine
 
-    /// A draft's accent ring and first words, a saved note's title in roman ink, or an untitled one's first words, both
-    /// in italic in the second color.
-    @ViewBuilder private var mainLine: some View {
-        switch summary.kind {
-        case .draft:
-            HStack(spacing: Layout.ringGap) {
+    /// The note's title in roman ink, or its first words in italic in the second color when it has none, after an
+    /// accent ring for a draft.
+    private var mainLine: some View {
+        HStack(spacing: Layout.ringGap) {
+            if summary.kind == .draft {
                 Circle()
                     .stroke(Palette.accent, lineWidth: Layout.ringStroke)
                     .frame(width: Layout.ring, height: Layout.ring)
-                preview
             }
-        case .saved(let title?):
-            Text(title)
-                .font(Typeface.title)
-                .foregroundStyle(Palette.ink)
-        case .saved(nil):
-            preview
+            if let title = summary.title {
+                Text(title)
+                    .font(Typeface.title)
+                    .foregroundStyle(Palette.ink)
+            } else {
+                Text(summary.preview)
+                    .font(Typeface.preview)
+                    .foregroundStyle(Palette.second)
+            }
         }
-    }
-
-    private var preview: some View {
-        Text(summary.preview)
-            .font(Typeface.preview)
-            .foregroundStyle(Palette.second)
     }
 
     private var label: String {
@@ -63,10 +58,7 @@ struct NoteLine: View {
 extension NoteSummary {
     /// What a note's main line reads, as `NoteLine` draws it: its title, or its first words when it has none.
     var titleOrPreview: String {
-        switch kind {
-        case .saved(let title?): title
-        case .draft, .saved(nil): preview
-        }
+        title ?? preview
     }
 }
 

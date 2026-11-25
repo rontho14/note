@@ -71,6 +71,12 @@ public struct SQLiteNoteStorage: NoteStorage {
             .values(in: writer)
     }
 
+    public func rename(id: NoteID, title: String?) async throws {
+        try await writer.write { db in
+            _ = try NoteRecord.filter(key: id.rawValue).updateAll(db, NoteRecord.Columns.title.set(to: title))
+        }
+    }
+
     public func trashSummaries() -> any AsyncSequence<[TrashedNoteSummary], any Error> {
         ValueObservation
             .tracking { db in try TrashedNoteSummaryRecord.mostRecentlyTrashedFirst.fetchAll(db).map(\.summary) }

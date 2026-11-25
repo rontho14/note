@@ -1,9 +1,9 @@
 import NoteCore
 import SwiftUI
 
-/// Every note, newest first, following the store as it changes. Tapping one opens it, and holding one offers to delete
-/// it. The note just saved is tinted for a moment, and the list scrolls to it once its row is there. After a delete, a
-/// pill at the bottom offers Undo for a moment.
+/// Every note, newest first, following the store as it changes. Tapping one opens it, and holding one offers to rename
+/// or delete it. The note just saved is tinted for a moment, and the list scrolls to it once its row is there. After a
+/// delete, a pill at the bottom offers Undo for a moment.
 struct NotesScreen: View {
     let model: NotesModel
     /// Whether the strip rests on notes. Leaving takes the Undo pill away.
@@ -55,6 +55,10 @@ struct NotesScreen: View {
                         }
                         .buttonStyle(.plain)
                         .contextMenu {
+                            Button("Rename", systemImage: "pencil") {
+                                startNotesChange { try await model.startRenaming(summary.id) }
+                            }
+                            .accessibilityIdentifier(AccessibilityID.notesRename)
                             Button("Delete", systemImage: "trash") {
                                 startNotesChange { try await model.moveToTrash(summary.id, now: .now) }
                             }

@@ -133,7 +133,7 @@ A checkbox item has a 22 point box with corners of 5. A checked box is filled wi
 
 A search bar sits at the top, 58 points from the top of the screen. It is 44 points tall, fully rounded, in the surface color with a hairline border, and holds a magnifier in the second color. It has no placeholder word. The bar stays in place while the list scrolls under it, and a hairline under the bar marks the edge once the list has moved. A thin scroll indicator shows on the right while scrolling.
 
-Each row has a 54 point date column on the left and the note on the right, with 12 points between them and 13 points of padding above and below. The note is one line of title or preview, with its drawer label under it. A draft has a 7 point ring in the accent before its preview, and its label reads Draft. The date column says `now`, `today` or a short date such as `9 Nov`. Every row is the same height, which keeps a long list from jumping as it scrolls.
+Each row has a 54 point date column on the left and the note on the right, with 12 points between them and 13 points of padding above and below. The note is one line of title or preview, with its drawer label under it. A draft has a 7 point ring in the accent before its title or preview, and its label reads Draft. A draft has a title once it is renamed, drawn like a saved note's. The date column says `now`, `today` or a short date such as `9 Nov`. Every row is the same height, which keeps a long list from jumping as it scrolls.
 
 The date column says `now` for under a minute ago, `today` for earlier the same day, and a day and month such as `9 Nov` before that, with no year, so every date fits the column. `ListDate` in `NoteCore` owns the rule. A preview drops the note's leading whitespace and shows each run of line breaks as one space, so the line fills with words. `NoteStore` drops the whitespace as it reads, and `NoteSummary` joins the lines. The stored text is never changed.
 
@@ -141,7 +141,7 @@ On first launch the list area shows `No notes yet.` in italic in the second colo
 
 After a save the list shows the saved note tinted with the accent at 7% for `NotesModel.tintDuration`, then the tint fades. A note edited before the swipe is at the top. One saved without an edit keeps its place, and the list scrolls to it if it is off screen.
 
-Holding a note lifts its row as a card and shows a menu with Rename, Move to drawer and Delete, each with its icon. The menu is the system's context menu, so it draws in the system's type and lift, the one surface that does; Delete is not drawn in red. Move to drawer opens a sheet listing the drawers with the current one checked. Rename opens a sheet with the title field and a Save button above the keyboard.
+Holding a note lifts its row as a card and shows a menu with Rename, Move to drawer and Delete, each with its icon. The menu is the system's context menu, so it draws in the system's type and lift, the one surface that does; Delete is not drawn in red. Move to drawer opens a sheet listing the drawers with the current one checked. Rename opens a sheet with the title field and a Save button above the keyboard, laid out as the save sheet without its delete. The field holds the note's title, with the caret at its end. Save or Return stores the title as typed, and a title of only whitespace removes it. A tap on the dimmed list or a drag down dismisses the sheet with nothing stored.
 
 Deleting a note shows a dark pill above the footer, 52 points tall and fully rounded, saying `In the trash` with an underlined `Undo`. Until the footer exists it sits 16 points above the bottom of the screen. It stays for `NotesModel.undoDuration`, and for as long as VoiceOver reads it, which announces it as it appears. Leaving the notes screen takes it away, and the note stays in the trash.
 
@@ -179,7 +179,7 @@ A note can be dragged onto the button to delete it. As the note approaches, the 
 
 The sheet slides up over the dimmed note. From the top it has the title field, the drawer chips, and a row with delete and save.
 
-- The title field is 54 points tall with a hairline under it.
+- The title field is 54 points tall with a hairline under it. It starts empty, or with the draft's title when the draft was renamed.
 - Chips are 44 points tall with 13 points of side padding, fully rounded, 6 points apart. They wrap onto a new line only when the next chip does not fit. They follow the user's drawer order. The selected chip is filled with the accent. The others have a 1 point border in the second color. The last chip is a round plus with a dashed border, and it adds a drawer.
 - Delete is a 52 point circle with a 1 point border in the second color.
 - Save is 52 points tall, fully rounded, filled with the accent, and takes the remaining width.

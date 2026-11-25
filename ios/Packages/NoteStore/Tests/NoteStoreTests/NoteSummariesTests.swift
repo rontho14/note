@@ -68,6 +68,7 @@ struct NoteSummariesTests {
     }
 
     @Test func aSummaryCarriesWhetherTheNoteIsADraftOrSavedWithItsTitle() async throws {
+        try await storage.save(Note.sample("titled draft", modifiedAt: .milliseconds(4), title: "Plan"))
         try await storage.save(Note.sample("draft", modifiedAt: .milliseconds(3)))
         try await storage.save(Note.sample("untitled", modifiedAt: .milliseconds(2), savedAt: .milliseconds(2)))
         try await storage.save(
@@ -75,7 +76,8 @@ struct NoteSummariesTests {
 
         let summaries = try await currentSummaries()
 
-        #expect(summaries.map(\.kind) == [.draft, .saved(title: nil), .saved(title: "A title")])
+        #expect(summaries.map(\.kind) == [.draft, .draft, .saved, .saved])
+        #expect(summaries.map(\.title) == ["Plan", nil, nil, "A title"])
     }
 
     @Test func theSavedNoteCountIsTheSavedNotesOutsideTheTrash() async throws {

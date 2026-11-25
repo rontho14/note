@@ -13,6 +13,8 @@ public protocol NoteStorage: Sendable {
     func moveToTrash(id: NoteID, now: Date) async throws
     /// Takes the note `id` out of the trash, changing nothing else.
     func restoreFromTrash(id: NoteID) async throws
+    /// Gives the note `id` the title `title`, or no title when it is nil, changing nothing else.
+    func rename(id: NoteID, title: String?) async throws
     /// The newest note modified after `cutoff` that has unsaved edits and isn't in the trash: what write reopens.
     func mostRecentUnsavedNote(modifiedAfter cutoff: Date) async throws -> Note?
     /// Every note not in the trash, newest first, then again after every change to the notes.

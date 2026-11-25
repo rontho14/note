@@ -39,7 +39,7 @@ struct DrawersModelTests {
     }
 
     @Test(arguments: [
-        (Note.sample("saved", savedAt: .minutes(1), trashedAt: .minutes(2)), NoteSummary.Kind.saved(title: nil)),
+        (Note.sample("saved", savedAt: .minutes(1), trashedAt: .minutes(2)), NoteSummary.Kind.saved),
         (Note.sample("draft", trashedAt: .minutes(2)), NoteSummary.Kind.draft),
     ])
     func restoringTakesTheNoteOutOfTheTrashAndTheBubbleNamesWhereItWentOnceTheSheetIsDown(
@@ -80,7 +80,7 @@ struct DrawersModelTests {
         try await earlierStore.value
         try await restoring.value
 
-        #expect(model.restoredBubble == .saved(title: nil))
+        #expect(model.restoredBubble == .saved)
     }
 
     @Test func closingTheSheetWithNothingRestoredShowsNoBubble() {

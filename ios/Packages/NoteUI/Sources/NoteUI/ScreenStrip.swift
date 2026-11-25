@@ -59,24 +59,26 @@ public struct ScreenStrip: View {
         .defaultScrollAnchor(.trailing)
         .background(Palette.paper)
         .overlay { saveSheet }
+        .overlay { renameSheet }
     }
 
-    /// The save sheet over DESIGN.md's scrim, drawn above the strip rather than presented or placed inside it, so
-    /// focusing its title field never scrolls the strip and no presentation hands focus back to the editor. A tap on
-    /// the scrim or a drag down dismisses it.
+    /// The save sheet over the draft on write: its title field, then delete and save.
     @ViewBuilder private var saveSheet: some View {
         if writeModel.isAskingToSave {
-            ZStack(alignment: .bottom) {
-                Palette.scrim
-                    .ignoresSafeArea()
-                    .onTapGesture { writeModel.dismissSaveSheet() }
-                    .accessibilityAddTraits(.isButton)
-                    .accessibilityIdentifier(AccessibilityID.saveScrim)
-                SaveSheet(
-                    onSave: { title in answerAndLeave(.save(title: title)) },
-                    onDelete: { answerAndLeave(.delete) },
-                    onDismiss: writeModel.dismissSaveSheet)
-            }
+            TitleSheet(
+                title: writeModel.titleToOffer, purpose: .save(onDelete: { answerAndLeave(.delete) }),
+                onSave: { title in answerAndLeave(.save(title: title)) },
+                onDismiss: writeModel.dismissSaveSheet)
+        }
+    }
+
+    /// The rename sheet for the note held on notes.
+    @ViewBuilder private var renameSheet: some View {
+        if case .up(let renaming) = notesModel.renameSheet {
+            TitleSheet(
+                title: renaming.title, purpose: .rename,
+                onSave: { title in startNotesChange { try await notesModel.finishRenaming(renaming, typed: title) } },
+                onDismiss: notesModel.stopRenaming)
         }
     }
 

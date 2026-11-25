@@ -21,7 +21,8 @@ struct TrashTests {
 
         let trashed = try #require(try await storage.note(id: note.id))
         #expect(trashed.trashedAt == .minutes(9))
-        expectUnchangedApartFromTheTrash(trashed, note)
+        expectTextDatesAndSavedStateUnchanged(trashed, note)
+        #expect(trashed.title == note.title)
     }
 
     @Test func restoringTakesTheNoteOutOfTheTrashAndChangesNothingElse() async throws {
@@ -34,7 +35,8 @@ struct TrashTests {
 
         let restored = try #require(try await storage.note(id: note.id))
         #expect(restored.trashedAt == nil)
-        expectUnchangedApartFromTheTrash(restored, note)
+        expectTextDatesAndSavedStateUnchanged(restored, note)
+        #expect(restored.title == note.title)
     }
 
     @Test func theTrashListsOnlyTrashedNotesTheMostRecentlyTrashedFirstAndFollowsChanges() async throws {
@@ -46,7 +48,7 @@ struct TrashTests {
         let first = try #require(try await trash.next(isolation: #isolation))
         #expect(first.map(\.summary.preview) == ["newer", "older"])
         #expect(first.map(\.trashedAt) == [.minutes(3), .minutes(2)])
-        #expect(first.map(\.summary.kind) == [.draft, .saved(title: nil)])
+        #expect(first.map(\.summary.kind) == [.draft, .saved])
 
         try await storage.restoreFromTrash(id: newer.id)
         let after = try await trash.next(isolation: #isolation)
@@ -64,14 +66,5 @@ struct TrashTests {
         #expect(try await storage.note(id: expired.id) == nil)
         #expect(try await storage.note(id: kept.id) != nil)
         #expect(try await storage.note(id: outside.id) != nil)
-    }
-
-    private func expectUnchangedApartFromTheTrash(_ stored: Note, _ note: Note) {
-        #expect(Array(stored.text.utf8) == Array(note.text.utf8))
-        #expect(stored.cursor == note.cursor)
-        #expect(stored.createdAt == note.createdAt)
-        #expect(stored.modifiedAt == note.modifiedAt)
-        #expect(stored.title == note.title)
-        #expect(stored.savedAt == note.savedAt)
     }
 }

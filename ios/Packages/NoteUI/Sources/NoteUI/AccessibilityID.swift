@@ -7,6 +7,7 @@ public enum AccessibilityID {
     public static let notes = "notes"
     public static let notesEmpty = "notes.empty"
     public static let notesRowPrefix = "notes.row."
+    public static let notesRename = "notes.rename"
     public static let notesDelete = "notes.delete"
     public static let notesUndo = "notes.undo"
     public static let drawers = "drawers"
@@ -22,6 +23,10 @@ public enum AccessibilityID {
     public static let saveDelete = "save.delete"
     public static let saveConfirm = "save.confirm"
     public static let saveScrim = "save.scrim"
+    public static let rename = "rename"
+    public static let renameTitle = "rename.title"
+    public static let renameConfirm = "rename.confirm"
+    public static let renameScrim = "rename.scrim"
 
     static func notesRow(_ id: NoteID) -> String {
         notesRowPrefix + id.rawValue.uuidString

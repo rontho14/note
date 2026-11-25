@@ -56,6 +56,10 @@ actor HeldStorage: NoteStorage {
         try await wrapped.restoreFromTrash(id: id)
     }
 
+    func rename(id: NoteID, title: String?) async throws {
+        try await wrapped.rename(id: id, title: title)
+    }
+
     func mostRecentUnsavedNote(modifiedAfter cutoff: Date) async throws -> Note? {
         try await wrapped.mostRecentUnsavedNote(modifiedAfter: cutoff)
     }

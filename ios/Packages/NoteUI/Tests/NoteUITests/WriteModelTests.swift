@@ -187,6 +187,19 @@ struct WriteModelTests {
         #expect(try await storage.mostRecentUnsavedNote(modifiedAfter: .minutes(0))?.text == "typed just now")
     }
 
+    @Test func theSheetOffersARenamedDraftsTitleAsStoredAndNothingForAnUntitledOne() async throws {
+        type("untitled")
+        try await model.askToSave(now: .minutes(10))
+        #expect(model.titleToOffer == "")
+        model.dismissSaveSheet()
+
+        let renamed = Note.sample("renamed", modifiedAt: .minutes(1), title: "Two\nlines e\u{301}")
+        try await storage.save(renamed)
+        try await model.open(id: renamed.id)
+        try await model.askToSave(now: .minutes(11))
+        #expect(model.titleToOffer == "Two\nlines e\u{301}")
+    }
+
     @Test func theSheetsSaveIsCarriedOutOnLeavingAndOnlyTheFirstAnswerCounts() async throws {
         type("to save")
         try await model.askToSave(now: .minutes(10))

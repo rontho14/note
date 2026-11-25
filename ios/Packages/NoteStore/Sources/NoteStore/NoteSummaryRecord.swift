@@ -29,8 +29,8 @@ struct NoteSummaryRecord: Decodable, FetchableRecord {
 
     var summary: NoteSummary {
         NoteSummary(
-            id: NoteID(rawValue: id), textStart: textStart, modifiedAt: modifiedAt,
-            kind: isDraft ? .draft : .saved(title: title))
+            id: NoteID(rawValue: id), textStart: textStart, title: title, modifiedAt: modifiedAt,
+            kind: isDraft ? .draft : .saved)
     }
 }
 

@@ -11,6 +11,7 @@ struct NoteRecord: Decodable, FetchableRecord, TableRecord {
     /// The columns queries filter or change by name.
     enum Columns {
         static let modifiedAt = Column("modifiedAt")
+        static let title = Column("title")
         static let savedAt = Column("savedAt")
         static let trashedAt = Column("trashedAt")
     }

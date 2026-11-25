@@ -3,7 +3,8 @@ import NoteCore
 import Observation
 
 /// Every note as the notes list shows it, newest first, kept up to date with the store; the note just saved, which the
-/// list tints for a moment; and the note just deleted, which Undo can bring back for a moment.
+/// list tints for a moment; the note just deleted, which Undo can bring back for a moment; and the note the rename
+/// sheet is up for.
 @Observable
 final class NotesModel {
     /// How long the note just saved stays tinted before the tint fades.
@@ -13,6 +14,8 @@ final class NotesModel {
 
     /// Nil until the store first answers, so the list never shows itself empty before it has read.
     private(set) var summaries: [NoteSummary]?
+    /// The rename sheet: down, or up for a note with its title as the sheet rose.
+    private(set) var renameSheet = RenameSheet.down
     /// The note just saved, tinted and scrolled to.
     var justSaved: NoteID? { saved.value }
     /// The note just moved to the trash, which the Undo pill offers to bring back.
@@ -25,7 +28,8 @@ final class NotesModel {
     }
 
     private let storage: any NoteStorage
-    /// Deletes and undos wait in it for the store leaving write started, so it can't bring a deleted note back.
+    /// Every read and change the list makes waits in it for the store leaving write started, which writes the whole
+    /// note, so it can't bring a deleted note back or put an old title back.
     private let changes: NoteChanges
     private let saved = FadingValue<NoteID>(lasting: NotesModel.tintDuration)
     private let trashed = FadingValue<NoteID>(lasting: NotesModel.undoDuration)
@@ -53,6 +57,29 @@ final class NotesModel {
         trashed.show(id)
     }
 
+    /// Raises the rename sheet for the note `id`, with its title as stored in the field, once every earlier change has
+    /// finished. The list draws a title on one line, so the field never starts from that copy. A note gone by then
+    /// raises nothing.
+    func startRenaming(_ id: NoteID) async throws {
+        if let stored = try await changes.run({ try await self.storage.note(id: id) }) {
+            renameSheet = .up(Renaming(id: id, title: stored.title ?? ""))
+        }
+    }
+
+    /// Lowers the rename sheet with nothing stored.
+    func stopRenaming() {
+        renameSheet = .down
+    }
+
+    /// Lowers the rename sheet and gives the note it was up for the title `Note.title(typed:)` keeps of `typed`, once
+    /// every earlier change has finished, so a store still on its way, such as leaving write's, can't put the old title
+    /// back.
+    func finishRenaming(_ renaming: Renaming, typed: String) async throws {
+        renameSheet = .down
+        let title = Note.title(typed: typed)
+        try await changes.run { try await self.storage.rename(id: renaming.id, title: title) }
+    }
+
     /// Lowers the Undo pill and takes the note it offered out of the trash, back to its place in the list. Once the
     /// offer has faded, Undo does nothing.
     func undo() async throws {
@@ -72,4 +99,16 @@ final class NotesModel {
     func dismissUndo() {
         trashed.clear()
     }
+}
+
+/// The rename sheet over the notes list.
+enum RenameSheet {
+    case down
+    case up(Renaming)
+}
+
+/// The note the rename sheet is up for, and its title as the sheet rises.
+struct Renaming {
+    let id: NoteID
+    let title: String
 }

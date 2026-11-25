@@ -24,6 +24,11 @@ final class WriteModel {
     var isAskingToSave: Bool {
         sheet == .asking
     }
+    /// The title the save sheet's field starts with: the stored draft's title as stored, given when it was renamed in
+    /// the notes list, or nothing.
+    var titleToOffer: String {
+        stored?.title ?? ""
+    }
 
     private let storage: any NoteStorage
     /// The stored note the text on screen belongs to, as last stored. Nil when the text belongs to no stored note, so
@@ -106,20 +111,19 @@ final class WriteModel {
     /// write was left on, which the list shows: one just saved, or one with nothing new to save. Text never saved is
     /// held on write until the sheet is answered, so it stays as it is.
     func leave(now: Date) async throws -> NoteID? {
-        var saved: NoteID?
         try await changes.run {
             guard
                 case .apply(let change) = LeavingWrite(
                     self.screen, over: self.stored, answer: self.sheet.answer, now: now)
             else {
-                return
+                return nil
             }
             try await self.apply(change)
-            saved = self.stored.flatMap { $0.isDraft ? nil : $0.id }
+            let saved = self.stored.flatMap { $0.isDraft ? nil : $0.id }
             self.show(nil)
             self.sheet = .hidden
+            return saved
         }
-        return saved
     }
 
     /// Shows the note `fetch` finds with its caret, after every earlier change. Finding none leaves the screen as it

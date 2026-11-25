@@ -26,9 +26,13 @@ struct SavingTests {
         (" \t\n", nil),
     ])
     func aTitleIsKeptAsTypedUnlessItIsOnlyWhitespace(typed: String, title: String?) {
-        let saved = Note.sample("text", title: "Earlier").saved(title: typed, now: .minutes(1))
+        #expect(Note.title(typed: typed).map { Array($0.utf8) } == title.map { Array($0.utf8) })
+    }
 
-        #expect(saved.title.map { Array($0.utf8) } == title.map { Array($0.utf8) })
+    @Test func savingWithATitleKeepsTheTitleAsTypedAndMarksTheNoteSaved() {
+        let saved = Note.sample("text", title: "Earlier").saved(title: "  New\n", now: .minutes(1))
+
+        #expect(saved.title == "  New\n")
         #expect(saved.savedAt == .minutes(1))
     }
 

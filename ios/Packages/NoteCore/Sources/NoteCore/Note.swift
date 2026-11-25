@@ -60,11 +60,16 @@ public struct Note: Sendable {
         return note
     }
 
-    /// The note saved at `now` with `title`, kept as typed, or with no title when `title` is only whitespace.
+    /// The note saved at `now` with the title `Note.title(typed:)` keeps of `title`.
     public func saved(title: String, now: Date) -> Note {
         var note = saved(now: now)
-        note.title = Note.isEmpty(title) ? nil : title
+        note.title = Note.title(typed: title)
         return note
+    }
+
+    /// The title kept of `typed`: as typed, or none when it is only whitespace.
+    public static func title(typed: String) -> String? {
+        isEmpty(typed) ? nil : typed
     }
 
     /// The note with `text` and the caret at `caret`. Text that changed moves `modifiedAt` to `now`.
