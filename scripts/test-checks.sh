@@ -281,6 +281,16 @@ expect_fail "expired on 2020-01-01" "a named-states exception that has expired" 
     run_check check-named-states.sh "$(planted "$ui" "// check-named-states: allowed until 2020-01-01 by test-checks: planted
 var selection: TextSelection?")"
 
+exists="a doc names only code that exists"
+adr=docs/adr/0005-app-structure-and-enforced-boundaries.md
+
+expect_fail "$exists" "an ADR naming a member that was renamed" \
+    run_check check-doc-names.sh "$(replaced "$adr" '`WriteModel.leaving`' '`WriteModel.holdsLeaving`')"
+expect_fail "$exists" "an ADR naming a type that was deleted" \
+    run_check check-doc-names.sh "$(replaced "$adr" '`WriteModel.leaving`' '`SaveSheet.titleToOffer`')"
+expect_pass "an ADR naming a file" \
+    run_check check-doc-names.sh "$(replaced "$adr" '`WriteModel.leaving`' '`WriteModel.swift`')"
+
 for script in "$repo"/scripts/check-*.sh; do
     script="$(basename "$script")"
     expect_fail "can't be checked" "$script on a tree without the checked files" \

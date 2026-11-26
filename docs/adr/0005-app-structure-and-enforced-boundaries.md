@@ -75,7 +75,7 @@ Every interactive element, and each screen's outermost view, has an accessibilit
 
 UI tests attach a screenshot at each state worth seeing, named after the identifier of the screen shown. When one test captures the same screen twice, the later shots add `.<state>`, such as `write.saved`, because `scripts/run-ui-tests.sh` fails on two screenshots with the same name.
 
-The notes list follows `NoteStorage.noteSummaries()` through `NotesModel`, which holds nil until the store first answers so the list never flashes empty. Tapping a row calls `WriteModel.open(id:)`, which shows the note after the save that leaving write queued, and the strip then moves to write. Lists observe the database and refresh themselves when it changes, as in GRDB's demo app, instead of reloading after every save.
+The notes list follows `NoteStorage.noteSummaries()` through `NotesModel`, whose `StoreRead` stays `.reading` until the store first answers so the list never flashes empty. Tapping a row calls `WriteModel.open(id:)`, which shows the note after the save that leaving write queued, and the strip then moves to write. Lists observe the database and refresh themselves when it changes, as in GRDB's demo app, instead of reloading after every save.
 
 SwiftUI is the default. A screen moves to UIKit only when a measurement shows SwiftUI is too slow or cannot do the job. NetNewsWire follows the same rule. The write screen was the likely case, because it must restore the cursor and keep text byte for byte. On iOS 27, `TextEditor(text:selection:)` does both: an edit leaves CRLF, combining marks and emoji as they were, and the caret can be set and read through its `TextSelection`. So the write screen stays on SwiftUI until long notes measure too slow.
 
