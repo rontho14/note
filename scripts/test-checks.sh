@@ -291,6 +291,22 @@ expect_fail "$exists" "an ADR naming a type that was deleted" \
 expect_pass "an ADR naming a file" \
     run_check check-doc-names.sh "$(replaced "$adr" '`WriteModel.leaving`' '`WriteModel.swift`')"
 
+query_rules="queries order and filter by NoteRecord rules"
+record=ios/Packages/NoteStore/Sources/NoteStore/NoteRecord.swift
+summary_record=ios/Packages/NoteStore/Sources/NoteStore/NoteSummaryRecord.swift
+
+expect_fail "$query_rules" "an order that names its column as a string" \
+    run_check check-query-rules.sh "$(replaced "$record" '"\(Columns.modifiedAt) DESC, id"' '"modifiedAt DESC, id"')"
+expect_fail "$query_rules" "a query that orders by raw SQL" \
+    run_check check-query-rules.sh "$(replaced "$summary_record" \
+        'ORDER BY \(NoteRecord.mostRecentlyTrashedFirstOrder)' 'ORDER BY trashedAt DESC, id')"
+expect_fail "$query_rules" "a column named by its string outside NoteRecord" \
+    run_check check-query-rules.sh "$(planted "$store" 'let trashed = NoteRecord.filter(Column("trashedAt") != nil)')"
+expect_pass "a migration that names its columns" \
+    run_check check-query-rules.sh "$(replaced ios/Packages/NoteStore/Sources/NoteStore/Migrations.swift '    return migrator' \
+        '    migrator.registerMigration("planted") { db in try db.create(indexOn: "note", columns: ["trashedAt"]) }
+    return migrator')"
+
 for script in "$repo"/scripts/check-*.sh; do
     script="$(basename "$script")"
     expect_fail "can't be checked" "$script on a tree without the checked files" \
