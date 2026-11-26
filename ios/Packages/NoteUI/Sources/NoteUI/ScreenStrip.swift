@@ -12,6 +12,7 @@ public struct ScreenStrip: View {
     @State private var writeModel: WriteModel
     @State private var notesModel: NotesModel
     @State private var drawersModel: DrawersModel
+    // check-named-states: allowed until 2027-05-25 by rontho14: scrollPosition(id:) binds an optional id.
     @State private var position: Position? = .write
     /// The screen the strip rests on. `position` follows the scroll as it moves, so a drag from write that springs
     /// back passes through notes; this changes only once the strip stops.
@@ -32,11 +33,11 @@ public struct ScreenStrip: View {
                 DrawersScreen(model: drawersModel)
                     .containerRelativeFrame(.horizontal)
                     .id(Position.drawers)
-                NotesScreen(model: notesModel, isShown: restingPosition == .notes, onOpen: open)
+                NotesScreen(model: notesModel, place: place(of: .notes), onOpen: open)
                     .containerRelativeFrame(.horizontal)
                     .id(Position.notes)
                 WriteScreen(
-                    model: writeModel, isShown: restingPosition == .write, onKeyboardUp: onKeyboardUp,
+                    model: writeModel, place: place(of: .write), onKeyboardUp: onKeyboardUp,
                     onSwipeTowardNotes: swipeTowardNotes, onLeftOnSaved: notesModel.showSaved
                 )
                 .containerRelativeFrame(.horizontal)
@@ -46,7 +47,7 @@ public struct ScreenStrip: View {
         }
         .scrollTargetBehavior(
             StripPaging(
-                holdsLastPage: writeModel.holdsLeaving,
+                leavingTheLastPage: writeModel.leaving,
                 onHeldSwipe: swipeTowardNotes)
         )
         .scrollIndicators(.hidden)
@@ -92,9 +93,10 @@ public struct ScreenStrip: View {
     /// Leaves write for notes, or raises the save sheet first while write holds text never saved. Both a held drag and
     /// VoiceOver's scroll come here.
     private func swipeTowardNotes() {
-        if writeModel.holdsLeaving {
+        switch writeModel.leaving {
+        case .held:
             startNotesChange { try await writeModel.askToSave(now: .now) }
-        } else {
+        case .free:
             showNotes()
         }
     }
@@ -103,6 +105,11 @@ public struct ScreenStrip: View {
     private func showNotes() {
         restingPosition = .notes
         withAnimation { position = .notes }
+    }
+
+    /// Whether the strip rests on `screen`.
+    private func place(of screen: Position) -> StripPlace {
+        restingPosition == screen ? .resting : .away
     }
 
     /// Shows the note `id` on write, and moves there.

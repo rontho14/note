@@ -6,7 +6,8 @@ import Observation
 final class FadingValue<Value> {
     private(set) var showing = Showing<Value>.hidden
     private let duration: Duration
-    private var fading: Task<Void, Never>?
+    /// The wait that clears the value, finished or not. It starts as one with nothing to do.
+    private var fading = Task<Void, Never> {}
 
     init(lasting duration: Duration) {
         self.duration = duration
@@ -20,12 +21,12 @@ final class FadingValue<Value> {
 
     /// Keeps the value shown until `resume()`, as while VoiceOver reads it.
     func pause() {
-        fading?.cancel()
+        fading.cancel()
     }
 
     /// Clears the value after a full duration from now.
     func resume() {
-        fading?.cancel()
+        fading.cancel()
         fading = Task {
             do {
                 try await Task.sleep(for: duration)
@@ -37,7 +38,7 @@ final class FadingValue<Value> {
     }
 
     func clear() {
-        fading?.cancel()
+        fading.cancel()
         showing = .hidden
     }
 }

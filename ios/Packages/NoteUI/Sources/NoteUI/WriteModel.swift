@@ -16,18 +16,19 @@ final class WriteModel {
             refreshHoldsLeaving()
         }
     }
+    // check-named-states: allowed until 2027-05-25 by rontho14: TextEditor's selection binding is optional.
     var selection: TextSelection?
-    /// Whether write holds text never saved, so a swipe toward notes must ask first. It changes only when the text
-    /// turns empty or not, or the note on screen changes, so a view that reads it isn't redrawn on every keystroke.
-    private(set) var holdsLeaving = false
+    /// Whether a swipe toward notes leaves write or is held because write holds text never saved, so it asks first.
+    /// It changes only when the text turns empty or not, or the note on screen changes, so a view that reads it isn't
+    /// redrawn on every keystroke.
+    private(set) var leaving = Leaving.free
     /// The save sheet: up while raised and not yet answered, with the title its field starts from, or down.
     var saveSheet: TitleSheetState {
         if case .asking(let title) = sheet { .up(title: title) } else { .down }
     }
 
-    /// The stored note the text on screen belongs to, as last stored. Nil when the text belongs to no stored note, so
-    /// the next store of text that isn't empty creates one.
-    private var stored: Note? {
+    /// The stored note the text on screen belongs to, as last stored.
+    private var stored = StoredNote.notYet {
         didSet { refreshHoldsLeaving() }
     }
     /// The last value of `text` that wasn't empty, kept as it is typed, so a saved note erased before the pause that
@@ -67,12 +68,12 @@ final class WriteModel {
     /// otherwise starts a blank note. The note stays stored either way.
     func returnToForeground(now: Date) async throws {
         try await changes.run { _ in
-            guard self.sheet == .hidden, let stored = self.stored,
+            guard self.sheet == .hidden, case .stored(let stored) = self.stored,
                 !Reopening.reopens(modifiedAt: stored.modifiedAt, now: now)
             else {
                 return
             }
-            self.show(nil)
+            self.showBlank()
         }
     }
 
@@ -81,7 +82,7 @@ final class WriteModel {
     func askToSave(now: Date) async throws {
         try await changes.run {
             try await self.writeText(now: now, to: $0)
-            if let stored = self.stored {
+            if case .stored(let stored) = self.stored {
                 self.sheet = .asking(title: stored.titleInTheField)
             }
         }
@@ -100,22 +101,23 @@ final class WriteModel {
         sheet = .hidden
     }
 
-    /// Leaving write for notes: stores the change `LeavingWrite` decides, then blanks write, and returns the saved note
-    /// write was left on, which the list shows: one just saved, or one with nothing new to save. Text never saved is
-    /// held on write until the sheet is answered, so it stays as it is.
-    func leave(now: Date) async throws -> NoteID? {
+    /// Leaving write for notes: stores the change `LeavingWrite` decides, then blanks write, and returns what write was
+    /// left on. A saved note, one just saved or one with nothing new to save, is what the list shows. Text never saved
+    /// is held on write until the sheet is answered, so it stays as it is.
+    func leave(now: Date) async throws -> LeftOn {
         try await changes.run { storage in
             guard
                 case .apply(let change) = LeavingWrite(
-                    self.screen, over: self.stored, answer: self.sheet.answer, now: now)
+                    self.screen, over: self.stored, answer: self.sheet.outcome, now: now)
             else {
-                return nil
+                return .nothingToShow
             }
             try await self.apply(change, to: storage)
-            let saved = self.stored.flatMap { $0.isDraft ? nil : $0.id }
-            self.show(nil)
+            let left: LeftOn =
+                if case .stored(let note) = self.stored, !note.isDraft { .savedNote(note.id) } else { .nothingToShow }
+            self.showBlank()
             self.sheet = .hidden
-            return saved
+            return left
         }
     }
 
@@ -130,11 +132,18 @@ final class WriteModel {
         }
     }
 
-    /// Puts `note` on screen with its caret, or a blank note when it is nil.
-    private func show(_ note: Note?) {
-        stored = note
-        text = note?.text ?? ""
-        selection = note.map { TextSelection(insertionPoint: $0.cursorIndex) }
+    /// Puts `note` on screen with its caret.
+    private func show(_ note: Note) {
+        stored = .stored(note)
+        text = note.text
+        selection = TextSelection(insertionPoint: note.cursorIndex)
+    }
+
+    /// Puts a blank note on screen, which the next store of text that isn't empty creates.
+    private func showBlank() {
+        stored = .notYet
+        text = ""
+        selection = nil
     }
 
     private func writeText(now: Date, to storage: any NoteStorage) async throws {
@@ -149,23 +158,23 @@ final class WriteModel {
             return
         case .store(let note):
             try await storage.save(note)
-            stored = note
+            stored = .stored(note)
         case .save(let note):
             try await SaveMeasurement.measure { try await storage.save(note) }
-            stored = note
+            stored = .stored(note)
         case .delete(let id):
             try await storage.deletePermanently(id: id)
-            stored = nil
+            stored = .notYet
         case .trash(let note):
             try await storage.save(note)
-            stored = nil
+            stored = .notYet
         }
     }
 
     private func refreshHoldsLeaving() {
-        let holds = LeavingWrite.asksFirst(screen, over: stored)
-        if holds != holdsLeaving {
-            holdsLeaving = holds
+        let leaving: Leaving = LeavingWrite.asksFirst(screen, over: stored) ? .held : .free
+        if leaving != self.leaving {
+            self.leaving = leaving
         }
     }
 
@@ -196,8 +205,22 @@ private enum SaveSheetState: Equatable {
     case asking(title: String)
     case answered(SaveSheetAnswer)
 
-    /// The answer given, once the sheet is answered.
-    var answer: SaveSheetAnswer? {
-        if case .answered(let answer) = self { answer } else { nil }
+    /// Whether the sheet was answered, for leaving write to carry out.
+    var outcome: SaveSheetOutcome {
+        if case .answered(let answer) = self { .answered(answer) } else { .unanswered }
     }
+}
+
+/// What leaving write was left on.
+enum LeftOn: Equatable {
+    /// A saved note, just saved or with nothing new to save, which the list shows.
+    case savedNote(NoteID)
+    /// A draft trashed, erased text or nothing stored: the list has no note to show.
+    case nothingToShow
+}
+
+/// Whether a swipe off the last screen of the strip leaves it, or is held there so the screen can ask first.
+enum Leaving: Equatable {
+    case free
+    case held
 }

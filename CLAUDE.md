@@ -43,7 +43,7 @@ A rule that gets broken twice gets a check in `make check`. When a correction re
 | Never edit a migration that has shipped. | `scripts/check-migrations.sh`, and `MigrationTests` upgrades a database from an earlier version |
 | A change to behavior a doc describes updates that doc in the same commit. A doc names where a value lives, such as a Makefile variable, a script or a type, and never copies the value: no counts, device names or lists. | Review only: a judgment call |
 | New `scripts/test-checks.sh` cases go through `expect_fail`, `expect_pass` and the existing fixture helpers. | Review only |
-| Each state a value can be in is a named case. No optional, nil or Bool stands for a mode. | Review only: a judgment call |
+| Each state a value can be in is a named case. No optional, nil or Bool stands for a mode. | `scripts/check-named-states.sh` in NoteUI, where the modes live, and review elsewhere |
 | A name says its main side effect. A parameter that only tests use needs a recorded reason. | Review only: a judgment call |
 | Settled decisions in the ADRs are not reopened in review without new information. | Review only |
 | Build today what can be built today. Linear issues are guidance, not a schedule: never put off work because an issue plans it for later. Put off only what would need temporary code. | Review only |

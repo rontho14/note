@@ -6,7 +6,8 @@ import NoteCore
 /// model, so no model can reach the store outside the queue except to follow it.
 final class NoteChanges {
     private let storage: any NoteStorage
-    private var last: Task<Void, Never>?
+    /// The latest change, finished or not. It starts as one with nothing to do.
+    private var last = Task<Void, Never> {}
 
     init(storage: any NoteStorage) {
         self.storage = storage
@@ -17,7 +18,7 @@ final class NoteChanges {
         let previous = last
         let storage = storage
         let next = Task {
-            await previous?.value
+            await previous.value
             return try await change(storage)
         }
         last = Task { _ = await next.result }

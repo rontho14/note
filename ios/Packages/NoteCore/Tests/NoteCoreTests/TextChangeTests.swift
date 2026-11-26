@@ -10,7 +10,7 @@ struct TextChangeTests {
         let text = "Emoji 👩🏽‍💻 and combining e\u{301}\r\nCRLF"
         let caret = text.utf8.index(text.startIndex, offsetBy: "Emoji 👩🏽‍💻".utf8.count)
 
-        let stored = try #require(stored(change(.typed(text, caret: caret), over: nil, now: .minutes(10))))
+        let stored = try #require(stored(change(.typed(text, caret: caret), over: .notYet, now: .minutes(10))))
 
         #expect(Array(stored.text.utf8) == Array(text.utf8))
         #expect(stored.cursor == "Emoji 👩🏽‍💻".utf8.count)
@@ -20,19 +20,19 @@ struct TextChangeTests {
     }
 
     @Test func erasedTextOverNoStoredNoteChangesNothing() {
-        #expect(changesNothing(change(.erased(lastText: "gone"), over: nil, now: .minutes(10))))
+        #expect(changesNothing(change(.erased(lastText: "gone"), over: .notYet, now: .minutes(10))))
     }
 
     @Test func erasingADraftDeletesIt() {
         let draft = Note.sample("first", modifiedAt: .minutes(10))
 
-        #expect(deleted(change(.erased(lastText: "first"), over: draft, now: .minutes(11))) == draft.id)
+        #expect(deleted(change(.erased(lastText: "first"), over: .stored(draft), now: .minutes(11))) == draft.id)
     }
 
     @Test func erasingASavedNoteTrashesItWithItsStoredText() throws {
         let note = Note.sample("kept", modifiedAt: .minutes(10), savedAt: .minutes(10))
 
-        let trashed = try #require(trashed(change(.erased(lastText: "kept"), over: note, now: .minutes(11))))
+        let trashed = try #require(trashed(change(.erased(lastText: "kept"), over: .stored(note), now: .minutes(11))))
 
         #expect(trashed.id == note.id)
         #expect(trashed.text == "kept")
@@ -44,7 +44,7 @@ struct TextChangeTests {
         let note = Note.sample("abc", modifiedAt: .minutes(10), savedAt: .minutes(10))
         let lastText = "abcdef 👩🏽‍💻"
 
-        let trashed = try #require(trashed(change(.erased(lastText: lastText), over: note, now: .minutes(11))))
+        let trashed = try #require(trashed(change(.erased(lastText: lastText), over: .stored(note), now: .minutes(11))))
 
         #expect(Array(trashed.text.utf8) == Array(lastText.utf8))
         #expect(trashed.modifiedAt == .minutes(11))
@@ -55,7 +55,7 @@ struct TextChangeTests {
         let draft = Note.sample("one", createdAt: .minutes(10), modifiedAt: .minutes(10))
 
         let stored = try #require(
-            stored(change(.typed("one two", caret: "one two".endIndex), over: draft, now: .minutes(11))))
+            stored(change(.typed("one two", caret: "one two".endIndex), over: .stored(draft), now: .minutes(11))))
 
         #expect(stored.id == draft.id)
         #expect(stored.text == "one two")
@@ -67,7 +67,7 @@ struct TextChangeTests {
         let draft = Note.sample("caret", cursor: 5, modifiedAt: .minutes(10))
 
         let stored = try #require(
-            stored(change(.typed("caret", caret: "caret".startIndex), over: draft, now: .minutes(11))))
+            stored(change(.typed("caret", caret: "caret".startIndex), over: .stored(draft), now: .minutes(11))))
 
         #expect(stored.cursor == 0)
         #expect(stored.modifiedAt == .minutes(10))
@@ -76,7 +76,7 @@ struct TextChangeTests {
     @Test func nothingChangedChangesNothing() {
         let draft = Note.sample("same", cursor: 4, modifiedAt: .minutes(10))
 
-        #expect(changesNothing(change(.typed("same", caret: "same".endIndex), over: draft, now: .minutes(11))))
+        #expect(changesNothing(change(.typed("same", caret: "same".endIndex), over: .stored(draft), now: .minutes(11))))
     }
 
     @Test func aChangeOfNormalizationIsAnEdit() throws {
@@ -84,13 +84,13 @@ struct TextChangeTests {
         let decomposed = "e\u{301}"
 
         let stored = try #require(
-            stored(change(.typed(decomposed, caret: decomposed.endIndex), over: draft, now: .minutes(11))))
+            stored(change(.typed(decomposed, caret: decomposed.endIndex), over: .stored(draft), now: .minutes(11))))
 
         #expect(Array(stored.text.utf8) == Array(decomposed.utf8))
         #expect(stored.modifiedAt == .minutes(11))
     }
 
-    private func change(_ screen: TextOnScreen, over note: Note?, now: Date) -> TextChange {
+    private func change(_ screen: TextOnScreen, over note: StoredNote, now: Date) -> TextChange {
         TextChange(storing: screen, over: note, now: now, newID: newID)
     }
 

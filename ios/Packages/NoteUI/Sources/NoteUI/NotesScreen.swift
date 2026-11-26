@@ -7,7 +7,7 @@ import SwiftUI
 struct NotesScreen: View {
     let model: NotesModel
     /// Whether the strip rests on notes. Leaving takes the Undo pill away.
-    let isShown: Bool
+    let place: StripPlace
     let onOpen: (NoteID) -> Void
 
     var body: some View {
@@ -21,8 +21,8 @@ struct NotesScreen: View {
                 }
             }
             .animation(.easeOut, value: model.undoable)
-            .onChange(of: isShown) { _, shown in
-                if !shown {
+            .onChange(of: place) { _, place in
+                if place == .away {
                     model.dismissUndo()
                 }
             }

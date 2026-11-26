@@ -259,6 +259,28 @@ done
 expect_pass "a commented-out print" run_check check-logging.sh "$(planted "$app" '// print("planted")')"
 expect_pass "a call to printer(" run_check check-logging.sh "$(planted "$app" 'printer("planted")')"
 
+mode="no optional, nil or Bool stands for a mode"
+
+for declaration in \
+    "private(set) var renaming: Renaming?" \
+    "private var trashed: [TrashedNoteSummary]? = nil" \
+    "func leave(now: Date) async throws -> NoteID? {" \
+    "let isShown: Bool" \
+    "init(isFocused: Bool) {}" \
+    "let up = model.undoable != nil"; do
+    expect_fail "$mode" "'$declaration' in $ui" run_check check-named-states.sh "$(planted "$ui" "$declaration")"
+done
+expect_pass "a FocusState Bool" run_check check-named-states.sh "$(planted "$ui" "@FocusState private var isEditing: Bool")"
+expect_pass "a predicate" run_check check-named-states.sh "$(planted "$ui" "func isExpired(now: Date) -> Bool { true }")"
+expect_pass "an optional stored column in NoteCore" \
+    run_check check-named-states.sh "$(planted "$core" "public var title: String?")"
+expect_pass "an exception on the line above that has not expired" \
+    run_check check-named-states.sh "$(planted "$ui" "// check-named-states: allowed until 2099-01-01 by test-checks: planted
+var selection: TextSelection?")"
+expect_fail "expired on 2020-01-01" "a named-states exception that has expired" \
+    run_check check-named-states.sh "$(planted "$ui" "// check-named-states: allowed until 2020-01-01 by test-checks: planted
+var selection: TextSelection?")"
+
 for script in "$repo"/scripts/check-*.sh; do
     script="$(basename "$script")"
     expect_fail "can't be checked" "$script on a tree without the checked files" \

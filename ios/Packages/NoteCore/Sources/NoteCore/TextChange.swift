@@ -11,20 +11,20 @@ public enum TextChange: Sendable {
     case delete(NoteID)
     case trash(Note)
 
-    /// Decides the change for `screen` over `stored`, the note as last stored or nil. Text that changed, byte for
+    /// Decides the change for `screen` over `stored`, the note as last stored. Text that changed, byte for
     /// byte, moves `modifiedAt`. A caret that moved alone stores the caret and keeps `modifiedAt`, so it neither
     /// reorders notes nor extends the reopen window. A saved note erased goes to the trash with the last text on
     /// screen, which the pause before a store may have kept from the store. `newID` names the note if this store
     /// creates it; `NoteCore` takes random values as arguments.
-    public init(storing screen: TextOnScreen, over stored: Note?, now: Date, newID: NoteID) {
+    public init(storing screen: TextOnScreen, over stored: StoredNote, now: Date, newID: NoteID) {
         switch (screen, stored) {
         case (.erased(let lastText), _):
             self.init(erasing: lastText, over: stored, now: now)
-        case (.typed(let text, let caret), nil):
+        case (.typed(let text, let caret), .notYet):
             var note = Note(id: newID, text: text, cursor: 0, createdAt: now, modifiedAt: now)
             note.cursorIndex = caret
             self = .store(note)
-        case (.typed(let text, let caret), let stored?):
+        case (.typed(let text, let caret), .stored(let stored)):
             let note = stored.edited(text: text, caret: caret, now: now)
             self = note.hasSameText(as: stored) && note.cursor == stored.cursor ? .nothing : .store(note)
         }
@@ -32,8 +32,8 @@ public enum TextChange: Sendable {
 
     /// Decides the change for text erased after `lastText` over `stored`: nothing over no stored note, a draft deleted,
     /// or a saved note in the trash with `lastText`.
-    init(erasing lastText: String, over stored: Note?, now: Date) {
-        guard let stored else {
+    init(erasing lastText: String, over stored: StoredNote, now: Date) {
+        guard case .stored(let stored) = stored else {
             self = .nothing
             return
         }

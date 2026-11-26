@@ -7,7 +7,7 @@ import UIKit
 /// `Autosave.delay` after the last keystroke, and when the app goes to the background. Leaving the screen saves a saved
 /// note straight.
 struct WriteScreen: View {
-    private let isShown: Bool
+    private let place: StripPlace
     private let onKeyboardUp: () -> Void
     private let onSwipeTowardNotes: () -> Void
     private let onLeftOnSaved: (NoteID) -> Void
@@ -15,15 +15,15 @@ struct WriteScreen: View {
     @FocusState private var isEditing: Bool
     @Environment(\.scenePhase) private var scenePhase
 
-    /// `isShown` is whether the screen is the one on screen. `onKeyboardUp` runs each time the keyboard finishes
+    /// `place` is whether the strip rests on the screen. `onKeyboardUp` runs each time the keyboard finishes
     /// appearing. `onSwipeTowardNotes` runs for VoiceOver's scroll toward notes, which the strip's paging never sees.
     /// `onLeftOnSaved` gets the saved note write was left on, for the list to show.
     init(
-        model: WriteModel, isShown: Bool, onKeyboardUp: @escaping () -> Void,
+        model: WriteModel, place: StripPlace, onKeyboardUp: @escaping () -> Void,
         onSwipeTowardNotes: @escaping () -> Void, onLeftOnSaved: @escaping (NoteID) -> Void
     ) {
         self.model = model
-        self.isShown = isShown
+        self.place = place
         self.onKeyboardUp = onKeyboardUp
         self.onSwipeTowardNotes = onSwipeTowardNotes
         self.onLeftOnSaved = onLeftOnSaved
@@ -50,7 +50,7 @@ struct WriteScreen: View {
             }
             .task {
                 await stoppingTheAppOnFailure { try await model.loadRecentUnsavedNote(now: .now) }
-                isEditing = isShown
+                isEditing = place == .resting
             }
             .task(id: model.text) {
                 do {
@@ -61,13 +61,13 @@ struct WriteScreen: View {
                 await stoppingTheAppOnFailure { try await model.storeText(now: .now) }
             }
             .onChange(of: model.saveSheet) { _, sheet in
-                isEditing = sheet == .down && isShown
+                isEditing = sheet == .down && place == .resting
             }
-            .onChange(of: isShown) { _, shown in
-                isEditing = shown
-                if !shown {
+            .onChange(of: place) { _, place in
+                isEditing = place == .resting
+                if place == .away {
                     startNotesChange {
-                        if let saved = try await model.leave(now: .now) {
+                        if case .savedNote(let saved) = try await model.leave(now: .now) {
                             onLeftOnSaved(saved)
                         }
                     }

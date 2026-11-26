@@ -50,16 +50,18 @@ struct SavingTests {
         let saved = Note.sample("stored", savedAt: .minutes(1))
 
         #expect(
-            trashed(LeavingWrite(.erased(lastText: "stored"), over: saved, answer: nil, now: .minutes(9))) != nil
+            trashed(
+                LeavingWrite(.erased(lastText: "stored"), over: .stored(saved), answer: .unanswered, now: .minutes(9)))
+                != nil
         )
-        #expect(isNothing(LeavingWrite(.erased(lastText: ""), over: nil, answer: nil, now: .minutes(9))))
+        #expect(isNothing(LeavingWrite(.erased(lastText: ""), over: .notYet, answer: .unanswered, now: .minutes(9))))
     }
 
-    @Test(arguments: [nil, Note.sample("draft")])
-    func leavingTextThatWasNeverSavedAsksFirst(stored: Note?) {
+    @Test(arguments: [StoredNote.notYet, .stored(Note.sample("draft"))])
+    func leavingTextThatWasNeverSavedAsksFirst(stored: StoredNote) {
         guard
             case .askFirst = LeavingWrite(
-                .typed("typed", caret: "typed".endIndex), over: stored, answer: nil, now: .minutes(9))
+                .typed("typed", caret: "typed".endIndex), over: stored, answer: .unanswered, now: .minutes(9))
         else {
             Issue.record("expected askFirst")
             return
@@ -72,7 +74,7 @@ struct SavingTests {
         let note = try #require(
             self.saved(
                 LeavingWrite(
-                    .typed("saved, edited", caret: "saved, edited".endIndex), over: saved, answer: nil,
+                    .typed("saved, edited", caret: "saved, edited".endIndex), over: .stored(saved), answer: .unanswered,
                     now: .minutes(9))))
 
         #expect(note.id == saved.id)
@@ -87,7 +89,8 @@ struct SavingTests {
         #expect(
             isNothing(
                 LeavingWrite(
-                    .typed("saved", caret: "saved".endIndex), over: saved, answer: nil, now: .minutes(9))))
+                    .typed("saved", caret: "saved".endIndex), over: .stored(saved), answer: .unanswered,
+                    now: .minutes(9))))
     }
 
     @Test func leavingAfterTheSheetsSaveSavesTheDraftWithItsTitle() throws {
@@ -96,7 +99,8 @@ struct SavingTests {
         let note = try #require(
             saved(
                 LeavingWrite(
-                    .typed("draft", caret: "draft".endIndex), over: draft, answer: .save(title: "Title"),
+                    .typed("draft", caret: "draft".endIndex), over: .stored(draft),
+                    answer: .answered(.save(title: "Title")),
                     now: .minutes(9))))
 
         #expect(note.id == draft.id)
@@ -111,7 +115,8 @@ struct SavingTests {
         let note = try #require(
             trashed(
                 LeavingWrite(
-                    .typed("draft", caret: "draft".endIndex), over: draft, answer: .delete, now: .minutes(9))))
+                    .typed("draft", caret: "draft".endIndex), over: .stored(draft), answer: .answered(.delete),
+                    now: .minutes(9))))
 
         #expect(note.id == draft.id)
         #expect(note.trashedAt == .minutes(9))

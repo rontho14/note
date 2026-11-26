@@ -164,18 +164,18 @@ struct WriteModelTests {
     }
 
     @Test func onlyTextThatWasNeverSavedHoldsWrite() async throws {
-        #expect(!model.holdsLeaving)
+        #expect(model.leaving == .free)
         type("typed")
-        #expect(model.holdsLeaving)
+        #expect(model.leaving == .held)
         try await model.storeText(now: .minutes(1))
-        #expect(model.holdsLeaving)
+        #expect(model.leaving == .held)
         type(" ")
-        #expect(!model.holdsLeaving)
+        #expect(model.leaving == .free)
 
         let saved = Note.sample("saved", savedAt: .minutes(1))
         try await storage.save(saved)
         try await model.open(id: saved.id)
-        #expect(!model.holdsLeaving)
+        #expect(model.leaving == .free)
     }
 
     @Test func askingToSaveStoresTheTextTypedSinceThePauseBeforeRaisingTheSheet() async throws {
@@ -220,7 +220,7 @@ struct WriteModelTests {
         #expect(saved.trashedAt == nil)
         #expect(saved.modifiedAt == draft.modifiedAt)
         #expect(model.text.isEmpty)
-        #expect(left == draft.id)
+        #expect(left == .savedNote(draft.id))
     }
 
     @Test func theSheetsDeleteTrashesTheNoteOnLeavingAndBlanksWrite() async throws {
@@ -233,7 +233,7 @@ struct WriteModelTests {
 
         #expect(try await storage.note(id: draft.id)?.trashedAt == .minutes(11))
         #expect(model.text.isEmpty)
-        #expect(left == nil)
+        #expect(left == .nothingToShow)
     }
 
     @Test func dismissingTheSheetLeavesTheNoteADraftOnWrite() async throws {
@@ -261,7 +261,7 @@ struct WriteModelTests {
         #expect(stored.savedAt == .minutes(10))
         #expect(!stored.hasUnsavedEdits)
         #expect(model.text.isEmpty)
-        #expect(left == saved.id)
+        #expect(left == .savedNote(saved.id))
     }
 
     @Test func leavingAnUnchangedSavedNoteStoresNothingAndBlanksWrite() async throws {
@@ -273,7 +273,7 @@ struct WriteModelTests {
 
         #expect(try await storage.note(id: saved.id)?.savedAt == .minutes(2))
         #expect(model.text.isEmpty)
-        #expect(left == saved.id)
+        #expect(left == .savedNote(saved.id))
     }
 
     @Test func leavingWhileWriteHoldsUnsavedTextDoesNothing() async throws {
