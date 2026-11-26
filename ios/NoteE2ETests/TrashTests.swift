@@ -54,7 +54,7 @@ nonisolated final class TrashTests: XCTestCase {
         app.launchWithTrashSeeded("saved:1,draft:29")
         showDrawers(app)
         XCTAssertEqual(app.trashButton.value as? String, "2")
-        XCTAssertEqual(app.staticTexts[AccessibilityID.drawersUnsortedCount].label, "0")
+        XCTAssertEqual(app.staticTexts[AccessibilityID.drawersCount].label, "0")
         attachScreenshot(of: app, named: AccessibilityID.drawersTrash)
 
         app.trashButton.tap()
@@ -73,7 +73,7 @@ nonisolated final class TrashTests: XCTestCase {
 
         restoreFirstRowAndCloseTheSheet(app)
         XCTAssertTrue(app.staticTexts["Back in Unsorted"].waitForExistence(timeout: 5))
-        XCTAssertEqual(app.staticTexts[AccessibilityID.drawersUnsortedCount].label, "1")
+        XCTAssertEqual(app.staticTexts[AccessibilityID.drawersCount].label, "1")
         XCTAssertEqual(app.trashButton.value as? String, "1")
 
         app.trashButton.tap()

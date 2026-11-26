@@ -37,7 +37,7 @@ A rule that gets broken twice gets a check in `make check`. When a correction re
 | A check is a `scripts/check-<name>.sh`. `make check-fast` runs every such file, so a new check needs no wiring. | The `CHECKS` glob in the Makefile, tested by `scripts/test-checks.sh` |
 | Text is stored byte for byte. | `NoteStorageTests` |
 | An empty note is never stored. | `NoteStore` refuses one, tested by `NoteStorageTests`, and `NoteInvariants` reads every simulator's database after the UI tests |
-| Every interactive element and each screen's outermost view has an accessibility identifier, a constant in `AccessibilityID` named by the convention in ADR 0005. | Review only |
+| Every interactive element and each screen's outermost view has an accessibility identifier. Each identifier is a constant in `AccessibilityID` named by the convention in ADR 0005. | `scripts/check-accessibility-ids.sh` for the names, and review for which elements have one |
 | Never edit `ios/Note.xcodeproj`. | It is generated from `ios/project.yml` and gitignored. |
 | Never add a dependency without an ADR. | Review only |
 | Queries order and filter by NoteRecord rules. `NoteRecord.Columns` names each column a query orders, filters or changes by, once. | `scripts/check-query-rules.sh` |

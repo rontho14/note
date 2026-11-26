@@ -14,23 +14,24 @@ nonisolated final class RenameTests: XCTestCase {
         text.typeText("Second body")
         app.swipeAlongTheStrip(.towardTheLeftEnd)
         XCTAssertTrue(app.saveSheet.waitForExistence(timeout: 5))
-        app.textFields[AccessibilityID.saveTitle].typeText("Old\n")
+        app.textFields[AccessibilityID.save.title].typeText("Old\n")
         XCTAssertTrue(waitForRows(2, in: app)[0].contains("Old"))
 
         rename(row: 0, in: app)
-        XCTAssertEqual(app.textFields[AccessibilityID.renameTitle].value as? String, "Old", "the field holds the title")
-        attachScreenshot(of: app, named: AccessibilityID.rename)
-        app.textFields[AccessibilityID.renameTitle].clearAndType("New")
-        app.buttons[AccessibilityID.renameConfirm].tap()
+        XCTAssertEqual(
+            app.textFields[AccessibilityID.rename.title].value as? String, "Old", "the field holds the title")
+        attachScreenshot(of: app, named: AccessibilityID.rename.sheet)
+        app.textFields[AccessibilityID.rename.title].clearAndType("New")
+        app.buttons[AccessibilityID.rename.confirm].tap()
         _ = waitForRows(2, in: app, firstContaining: "New")
 
         rename(row: 0, in: app)
-        app.textFields[AccessibilityID.renameTitle].clearAndType("   \n")
+        app.textFields[AccessibilityID.rename.title].clearAndType("   \n")
         _ = waitForRows(2, in: app, firstContaining: "Second body")
 
         rename(row: 1, in: app)
-        app.textFields[AccessibilityID.renameTitle].typeText(" ignored")
-        app.descendants(matching: .any)[AccessibilityID.renameScrim].tap()
+        app.textFields[AccessibilityID.rename.title].typeText(" ignored")
+        app.descendants(matching: .any)[AccessibilityID.rename.scrim].tap()
         XCTAssertTrue(app.renameSheet.waitForNonExistence(timeout: 5))
         XCTAssertTrue(
             waitForRows(2, in: app)[1].contains("First") && !rows(in: app).element(boundBy: 1).label.contains("ignored")
@@ -44,7 +45,7 @@ nonisolated final class RenameTests: XCTestCase {
         XCTAssertTrue(waitForRows(2, in: app)[0].contains("Seeded 0"))
 
         rename(row: 0, in: app)
-        app.textFields[AccessibilityID.renameTitle].typeText("Plan\n")
+        app.textFields[AccessibilityID.rename.title].typeText("Plan\n")
         let labels = waitForRows(2, in: app, firstContaining: "Plan")
         XCTAssertTrue(labels[0].contains("DRAFT"), labels[0])
         let heights = Set(rows(in: app).allElementsBoundByIndex.map(\.frame.height))
@@ -55,7 +56,7 @@ nonisolated final class RenameTests: XCTestCase {
         app.waitForWriteScreen()
         app.swipeAlongTheStrip(.towardTheLeftEnd)
         XCTAssertTrue(app.saveSheet.waitForExistence(timeout: 5))
-        XCTAssertEqual(app.textFields[AccessibilityID.saveTitle].value as? String, "Plan", "the field holds the title")
+        XCTAssertEqual(app.textFields[AccessibilityID.save.title].value as? String, "Plan", "the field holds the title")
         app.saveThroughTheSheet()
 
         let saved = waitForRows(2, in: app, firstContaining: "Plan")[0]
@@ -75,7 +76,7 @@ nonisolated final class RenameTests: XCTestCase {
 extension XCUIApplication {
     /// The rename sheet, which exists only while it is up.
     @MainActor fileprivate var renameSheet: XCUIElement {
-        descendants(matching: .any)[AccessibilityID.rename]
+        descendants(matching: .any)[AccessibilityID.rename.sheet]
     }
 }
 

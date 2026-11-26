@@ -28,9 +28,9 @@ nonisolated final class SavingTests: XCTestCase {
         app.swipeAlongTheStrip(.towardTheLeftEnd)
         XCTAssertTrue(app.saveSheet.waitForExistence(timeout: 5))
         assertShown(AccessibilityID.write, in: app)
-        XCTAssertTrue(hasKeyboardFocus(app.textFields[AccessibilityID.saveTitle]), "the title field has the caret")
+        XCTAssertTrue(hasKeyboardFocus(app.textFields[AccessibilityID.save.title]), "the title field has the caret")
         XCTAssertEqual(app.buttons[AccessibilityID.saveDelete].label, "Delete")
-        attachScreenshot(of: app, named: AccessibilityID.save)
+        attachScreenshot(of: app, named: AccessibilityID.save.sheet)
 
         app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.15)).tap()
         assertBackOnTheDraft(text, typing: "!", in: app)
@@ -123,7 +123,7 @@ nonisolated final class SavingTests: XCTestCase {
 
         app.swipeAlongTheStrip(.towardTheLeftEnd)
         assertShown(AccessibilityID.drawers, in: app)
-        let count = app.staticTexts[AccessibilityID.drawersUnsortedCount]
+        let count = app.staticTexts[AccessibilityID.drawersCount]
         XCTAssertTrue(count.waitForExistence(timeout: 5))
         XCTAssertEqual(count.label, "3", "three saved notes, not the draft or the note in the trash")
     }
@@ -161,7 +161,7 @@ nonisolated final class SavingTests: XCTestCase {
         app.swipeAlongTheStrip(.towardTheLeftEnd)
         if let title {
             XCTAssertTrue(app.saveSheet.waitForExistence(timeout: 5))
-            app.textFields[AccessibilityID.saveTitle].typeText(title + "\n")
+            app.textFields[AccessibilityID.save.title].typeText(title + "\n")
         } else {
             app.saveThroughTheSheet()
         }

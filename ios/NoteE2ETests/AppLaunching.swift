@@ -58,14 +58,14 @@ extension XCUIApplication {
 
     /// The save sheet, which exists only while it is up.
     @MainActor var saveSheet: XCUIElement {
-        descendants(matching: .any)[AccessibilityID.save]
+        descendants(matching: .any)[AccessibilityID.save.sheet]
     }
 
     /// Waits for the save sheet, taps its save button, leaving the title as it is, and waits for the sheet and its
     /// keyboard to go.
     @MainActor func saveThroughTheSheet(file: StaticString = #filePath, line: UInt = #line) {
         XCTAssertTrue(saveSheet.waitForExistence(timeout: 5), "the save sheet came up", file: file, line: line)
-        buttons[AccessibilityID.saveConfirm].tap()
+        buttons[AccessibilityID.save.confirm].tap()
         XCTAssertTrue(saveSheet.waitForNonExistence(timeout: 5), "the save sheet went", file: file, line: line)
         XCTAssertTrue(keyboards.firstMatch.waitForNonExistence(timeout: 5), "its keyboard went", file: file, line: line)
     }

@@ -307,6 +307,20 @@ expect_pass "a migration that names its columns" \
         '    migrator.registerMigration("planted") { db in try db.create(indexOn: "note", columns: ["trashedAt"]) }
     return migrator')"
 
+named_id="each identifier is a constant in AccessibilityID named by the convention in ADR 0005"
+ids=ios/Packages/NoteUI/Sources/NoteUI/AccessibilityID.swift
+
+expect_fail "$named_id" "an identifier of three parts" \
+    run_check check-accessibility-ids.sh "$(replaced "$ids" '"notes.undo"' '"notes.undo.button"')"
+expect_fail "$named_id" "an identifier with a capital" \
+    run_check check-accessibility-ids.sh "$(replaced "$ids" '"drawers.count"' '"drawers.unsortedCount"')"
+expect_fail "$named_id" "a sheet named with a dot" \
+    run_check check-accessibility-ids.sh "$(replaced "$ids" 'SheetID("rename")' 'SheetID("notes.rename")')"
+expect_fail "$named_id" "an identifier given as a string" \
+    run_check check-accessibility-ids.sh "$(planted "$ui" 'let planted = Text("").accessibilityIdentifier("notes.planted")')"
+expect_pass "a prefix for a repeated element" \
+    run_check check-accessibility-ids.sh "$(replaced "$ids" '"notes.row."' '"notes.card."')"
+
 for script in "$repo"/scripts/check-*.sh; do
     script="$(basename "$script")"
     expect_fail "can't be checked" "$script on a tree without the checked files" \

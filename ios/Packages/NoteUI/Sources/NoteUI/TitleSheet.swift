@@ -103,30 +103,17 @@ struct TitleSheet: View {
                 .contentShape(Capsule())
         }
         .buttonStyle(.plain)
-        .accessibilityIdentifier(purpose.identifiers.save)
+        .accessibilityIdentifier(purpose.identifiers.confirm)
     }
 }
 
 extension TitleSheet.Purpose {
-    /// The identifiers of the sheet's outermost view, its field, its Save and its scrim, by ADR 0005's convention.
-    fileprivate var identifiers: Identifiers {
+    /// The identifiers of the sheet's outermost view, its field, its Save and its scrim.
+    fileprivate var identifiers: SheetID {
         switch self {
-        case .save:
-            Identifiers(
-                sheet: AccessibilityID.save, title: AccessibilityID.saveTitle, save: AccessibilityID.saveConfirm,
-                scrim: AccessibilityID.saveScrim)
-        case .rename:
-            Identifiers(
-                sheet: AccessibilityID.rename, title: AccessibilityID.renameTitle, save: AccessibilityID.renameConfirm,
-                scrim: AccessibilityID.renameScrim)
+        case .save: AccessibilityID.save
+        case .rename: AccessibilityID.rename
         }
-    }
-
-    fileprivate struct Identifiers {
-        let sheet: String
-        let title: String
-        let save: String
-        let scrim: String
     }
 }
 

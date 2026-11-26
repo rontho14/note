@@ -20,7 +20,7 @@ struct DrawersScreen: View {
                     Text(count, format: .number)
                         .font(Typeface.count)
                         .foregroundStyle(Palette.second)
-                        .accessibilityIdentifier(AccessibilityID.drawersUnsortedCount)
+                        .accessibilityIdentifier(AccessibilityID.drawersCount)
                 }
             }
             .frame(height: Layout.rowLine)
