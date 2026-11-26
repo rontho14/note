@@ -38,6 +38,8 @@ A rule that gets broken twice gets a check in `make check`. When a correction re
 | Text is stored byte for byte. | `NoteStorageTests` |
 | An empty note is never stored. | `NoteStore` refuses one, tested by `NoteStorageTests`, and `NoteInvariants` reads every simulator's database after the UI tests |
 | Every interactive element and each screen's outermost view has an accessibility identifier. Each identifier is a constant in `AccessibilityID` named by the convention in ADR 0005. | `scripts/check-accessibility-ids.sh` for the names, and review for which elements have one |
+| A model owns its state. A view reads it and calls the model's named actions, and never hands the model's own state back to it. | Review only: a judgment call |
+| Before adding a helper, constant, schedule or state type, look for one that already does the job and extend it. | Review only: a judgment call |
 | Never edit `ios/Note.xcodeproj`. | It is generated from `ios/project.yml` and gitignored. |
 | Never add a dependency without an ADR. | Review only |
 | Queries order and filter by NoteRecord rules. `NoteRecord.Columns` names each column a query orders, filters or changes by, once. | `scripts/check-query-rules.sh` |
